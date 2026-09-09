@@ -54,7 +54,6 @@ import {
    State & Global Singletons
    ========================================================================== */
 
-let currentTheme = localStorage.getItem('portfolio_theme') || 'dark';
 let activeCategoryFilter = 'All';
 let activeProjectFilter = 'All';
 let chatHistory = [];
@@ -75,7 +74,6 @@ let editingPlatformId = null;
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
   initParticleCanvas();
   initSpotlightEngine();
   renderAllSections();
@@ -104,39 +102,6 @@ async function syncWithCloud() {
     }
   } catch (err) {
     console.warn('[CloudSync] Non-blocking startup sync note:', err.message);
-  }
-}
-
-/* ==========================================================================
-   Theme Management
-   ========================================================================== */
-
-function initTheme() {
-  document.documentElement.setAttribute('data-theme', currentTheme);
-  updateThemeIcon();
-
-  const toggleBtn = document.getElementById('theme-toggle');
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', currentTheme);
-      localStorage.setItem('portfolio_theme', currentTheme);
-      updateThemeIcon();
-    });
-  }
-}
-
-function updateThemeIcon() {
-  const sunIcon = document.querySelector('.theme-icon-sun');
-  const moonIcon = document.querySelector('.theme-icon-moon');
-  if (!sunIcon || !moonIcon) return;
-
-  if (currentTheme === 'dark') {
-    sunIcon.style.display = 'block';
-    moonIcon.style.display = 'none';
-  } else {
-    sunIcon.style.display = 'none';
-    moonIcon.style.display = 'block';
   }
 }
 
@@ -232,9 +197,8 @@ function initParticleCanvas() {
   function animate() {
     ctx.clearRect(0, 0, width, height);
 
-    const isLight = currentTheme === 'light';
-    const nodeColor = isLight ? 'rgba(5, 150, 105, 0.4)' : 'rgba(0, 245, 160, 0.55)';
-    const lineColor = isLight ? '5, 150, 105' : '0, 245, 160';
+    const nodeColor = 'rgba(0, 245, 160, 0.55)';
+    const lineColor = '0, 245, 160';
 
     for (let i = 0; i < nodes.length; i++) {
       const p = nodes[i];
