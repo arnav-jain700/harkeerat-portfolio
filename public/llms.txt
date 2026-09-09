@@ -1,0 +1,38 @@
+# Harkeerat Singh - Senior Full-Stack & AI Systems Engineer
+> Portfolio: https://harkeerat.dev
+> GitHub: https://github.com/harkeerat
+> LinkedIn: https://linkedin.com/in/harkeerat
+> Email: harkeerat@example.com
+
+## Professional Profile
+Full-stack and AI systems engineer specializing in high-throughput distributed architectures, production LLM inference pipelines, TypeScript/JavaScript micro-frontends, scalable cloud infrastructure, and low-latency systems. Experienced in architecting resilient web platforms, vector databases, real-time messaging, and high-performance serverless backends.
+
+## Core Technical Proficiencies
+- Languages: TypeScript, JavaScript (ES6+), Python, Go, Rust, SQL, HTML5/CSS3.
+- Frontend: Vanilla JS (framework-less architecture), React, Next.js, WebGL, Canvas API, TailwindCSS, Micro-frontends.
+- Backend & Distributed: Node.js, Express, Fastify, FastAPI, gRPC, WebSockets, Kafka, Redis, PostgreSQL.
+- Cloud & Infrastructure: Docker, Kubernetes, Terraform, AWS (ECS, Lambda, S3, CloudFront), Supabase, Vercel.
+- AI & Machine Learning: Groq API (Llama 3.3), OpenAI API, Anthropic Claude, LangChain, LlamaIndex, Vector Embeddings (Qdrant, pgvector), RAG Architectures.
+
+## Featured Production Projects
+- **NeuroFlow Distributed Inference Engine**: High-throughput distributed inference orchestration layer for open-weight LLMs utilizing dynamic request batching, KV-cache optimization, and zero-downtime routing.
+- **HyperScale Cloud Vector DB**: Sub-millisecond vector indexing and similarity search engine built on custom HNSW clustering algorithms with automatic sharding and replication.
+- **PulseOS Real-Time Kernel Monitor**: Real-time distributed telemetry dashboard capturing micro-kernel metrics, memory bandwidth allocation, and network jitter using WebSockets and Canvas rendering.
+- **Aether UI Design System**: Framework-agnostic, zero-dependency modern component design system built with CSS Custom Properties, semantic HTML, and precision accessibility standards.
+
+## Experience & Education
+- **Lead AI Systems Engineer** @ NeuralMatrix Labs (2023 - Present): Engineered distributed LLM serving systems, reducing TTFT by 42% and scaling to 10M+ daily inference queries.
+- **Senior Full-Stack Engineer** @ CloudScale Technologies (2021 - 2023): Designed high-availability microservices and real-time collaborative workspace architectures.
+- **Full-Stack Developer** @ InnovateSoft (2019 - 2021): Built performant enterprise dashboards and distributed PostgreSQL data pipelines.
+- **B.Tech in Computer Science & Engineering** @ Institute of Technology (2015 - 2019): Specialization in Distributed Systems and Algorithms.
+
+## Competitive Programming & Problem Solving
+- **LeetCode** (@harkeerat_dev): Rating 2,185 (Guardian, Top 1.1%), 1,150+ Problems Solved (310 Easy, 640 Medium, 200 Hard), 68 Contests.
+- **Codeforces** (@harkeerat_s): Rating 1,945 (Candidate Master, Top 3.8%), 720+ Problems Solved, 54 Contests.
+- **CodeChef** (@harkeerat_99): Rating 2,130 (5★ Coder), 480+ Problems Solved, Global Rank #1,840.
+- **Codolio** (@harkeerat_dev): Rating 2,350 (Grandmaster, Top 0.5%), 2,350+ Problems Solved (700 Easy, 1,250 Medium, 400 Hard), 160 Contests, 365-Day Streak.
+
+## Certifications
+- AWS Certified Solutions Architect - Professional (Amazon Web Services)
+- Certified Kubernetes Administrator - CKA (Cloud Native Computing Foundation)
+- Generative AI with Large Language Models (DeepLearning.AI)
