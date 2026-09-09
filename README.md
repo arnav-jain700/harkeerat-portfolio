@@ -98,12 +98,16 @@ create table if not exists public.portfolio_data (
 -- 2. Enable Row Level Security (RLS)
 alter table public.portfolio_data enable row level security;
 
--- 3. Allow public read access via the anon key
+-- 3. Drop existing policies if they already exist (safe to re-run)
+drop policy if exists "Allow public read access" on public.portfolio_data;
+drop policy if exists "Allow public insert and update access" on public.portfolio_data;
+
+-- 4. Allow public read access via the anon key
 create policy "Allow public read access" on public.portfolio_data
   for select
   using (true);
 
--- 4. Allow insert and update access via the anon key
+-- 5. Allow insert and update access via the anon key
 create policy "Allow public insert and update access" on public.portfolio_data
   for all
   using (true)
