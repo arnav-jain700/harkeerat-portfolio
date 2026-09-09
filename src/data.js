@@ -273,8 +273,8 @@ export const DEFAULT_DATABASE = {
     // SHA-256 for 'Harkeerat0904'
     adminPasswordHash: '5bf02a8662569dea9c6a7beaf51b2d21559b7311921832a588e36d44635b8865',
     groqApiKey: '',
-    supabaseUrl: '',
-    supabaseKey: '',
+    supabaseUrl: 'https://znlinbqdlixfsfytiqan.supabase.co',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpubGluYnFkbGl4ZnNmeXRpcWFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NTEyMjgsImV4cCI6MjEwNDUyNzIyOH0.qfd-oNbdIx3TluvQRoktxSucTXBfwIInaOxDRkzdC-U',
     lastSyncTimestamp: null
   }
 };
@@ -345,7 +345,12 @@ export function loadData() {
     parsed.certificates = Array.isArray(parsed.certificates) ? parsed.certificates : DEFAULT_DATABASE.certificates;
     parsed.codingPlatforms = Array.isArray(parsed.codingPlatforms) ? parsed.codingPlatforms : DEFAULT_DATABASE.codingPlatforms;
     parsed.messages = Array.isArray(parsed.messages) ? parsed.messages : DEFAULT_DATABASE.messages;
-    parsed.settings = parsed.settings || DEFAULT_DATABASE.settings;
+    parsed.settings = parsed.settings || { ...DEFAULT_DATABASE.settings };
+    if (!parsed.settings.supabaseUrl) {
+      parsed.settings.supabaseUrl = DEFAULT_DATABASE.settings.supabaseUrl;
+      parsed.settings.supabaseKey = DEFAULT_DATABASE.settings.supabaseKey;
+      saveData(parsed, false);
+    }
 
     return parsed;
   } catch (err) {
@@ -664,15 +669,26 @@ export function resetToDefaults() {
 
 /**
  * Background Cloud Synchronization with Supabase
+ * Sanitizes data to only sync public showcase fields (protecting inbox messages and security hashes)
  */
 export async function backgroundCloudSync(data) {
   const client = getSupabaseClient();
   if (!client) return false;
 
   try {
+    // Only upload public developer content — never expose private messages or security hashes
+    const publicData = {
+      profile: data.profile,
+      journey: data.journey,
+      skills: data.skills,
+      projects: data.projects,
+      certificates: data.certificates,
+      codingPlatforms: data.codingPlatforms
+    };
+
     const payload = {
       id: 'default_portfolio_snapshot',
-      data: data,
+      data: publicData,
       updated_at: new Date().toISOString()
     };
 
@@ -685,9 +701,11 @@ export async function backgroundCloudSync(data) {
       return false;
     }
 
-    const currentDb = loadData();
-    currentDb.settings.lastSyncTimestamp = new Date().toLocaleTimeString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentDb));
+    if (typeof localStorage !== 'undefined') {
+      const currentDb = loadData();
+      currentDb.settings.lastSyncTimestamp = new Date().toLocaleTimeString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentDb));
+    }
     return true;
   } catch (err) {
     console.warn('[Supabase Sync Exception]', err);
@@ -709,11 +727,32 @@ export async function pullFromCloud() {
       .single();
 
     if (error) {
+      // If table is newly created and contains 0 rows, auto-seed with local database
+      if (error.code === 'PGRST116') {
+        const local = loadData();
+        await backgroundCloudSync(local);
+        return { success: true, message: 'Initialized cloud snapshot from portfolio defaults.' };
+      }
       return { success: false, message: error.message };
     }
 
     if (data && data.data) {
-      saveData(data.data, false);
+      const current = loadData();
+      const merged = {
+        ...current,
+        profile: data.data.profile || current.profile,
+        journey: Array.isArray(data.data.journey) ? data.data.journey : current.journey,
+        skills: Array.isArray(data.data.skills) ? data.data.skills : current.skills,
+        projects: Array.isArray(data.data.projects) ? data.data.projects : current.projects,
+        certificates: Array.isArray(data.data.certificates) ? data.data.certificates : current.certificates,
+        codingPlatforms: Array.isArray(data.data.codingPlatforms) ? data.data.codingPlatforms : current.codingPlatforms,
+        messages: current.messages || [],
+        settings: {
+          ...current.settings,
+          lastSyncTimestamp: new Date().toLocaleTimeString()
+        }
+      };
+      saveData(merged, false);
       return { success: true, message: `Synced from cloud (Updated: ${data.updated_at})` };
     }
 

@@ -2,29 +2,36 @@ import { createClient } from '@supabase/supabase-js';
 
 let supabaseInstance = null;
 
+const DEFAULT_SUPABASE_URL = 'https://znlinbqdlixfsfytiqan.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpubGluYnFkbGl4ZnNmeXRpcWFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NTEyMjgsImV4cCI6MjEwNDUyNzIyOH0.qfd-oNbdIx3TluvQRoktxSucTXBfwIInaOxDRkzdC-U';
+
 /**
- * Get credentials from environment variables or custom settings
+ * Get credentials from environment variables, custom settings, or built-in defaults
  */
 export function getSupabaseCredentials() {
-  const envUrl = import.meta.env.VITE_SUPABASE_URL;
-  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const envUrl = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_SUPABASE_URL : (typeof process !== 'undefined' && process.env ? process.env.VITE_SUPABASE_URL : '');
+  const envKey = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_SUPABASE_ANON_KEY : (typeof process !== 'undefined' && process.env ? process.env.VITE_SUPABASE_ANON_KEY : '');
 
   let localUrl = null;
   let localKey = null;
 
   try {
-    const raw = localStorage.getItem('portfolio_settings');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      localUrl = parsed.supabaseUrl;
-      localKey = parsed.supabaseKey;
+    if (typeof localStorage !== 'undefined') {
+      const rawCache = localStorage.getItem('portfolio_master_cache');
+      if (rawCache) {
+        const parsed = JSON.parse(rawCache);
+        if (parsed && parsed.settings) {
+          localUrl = parsed.settings.supabaseUrl;
+          localKey = parsed.settings.supabaseKey;
+        }
+      }
     }
   } catch (e) {
-    console.warn('Could not parse local settings for Supabase:', e);
+    // ignore parsing errors
   }
 
-  const url = (localUrl && localUrl.trim()) || (envUrl && envUrl.trim()) || '';
-  const key = (localKey && localKey.trim()) || (envKey && envKey.trim()) || '';
+  const url = (localUrl && localUrl.trim()) || (envUrl && envUrl.trim()) || DEFAULT_SUPABASE_URL;
+  const key = (localKey && localKey.trim()) || (envKey && envKey.trim()) || DEFAULT_SUPABASE_ANON_KEY;
 
   return { url, key, isConfigured: Boolean(url && key) };
 }

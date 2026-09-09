@@ -73,7 +73,27 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initAdminConsole();
   checkUrlRouting();
+  syncWithCloud();
 });
+
+/**
+ * Non-blocking background sync with Supabase
+ * Ensures changes added in the admin console are visible to visitors globally
+ */
+async function syncWithCloud() {
+  try {
+    const res = await pullFromCloud();
+    if (res && res.success) {
+      renderAllSections();
+      renderStats();
+      renderCarousel();
+      renderCodingPlatforms(getCodingPlatforms());
+      console.info('[CloudSync] Global state synchronized successfully.');
+    }
+  } catch (err) {
+    console.warn('[CloudSync] Non-blocking startup sync note:', err.message);
+  }
+}
 
 /* ==========================================================================
    Theme Management
