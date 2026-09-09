@@ -6,18 +6,23 @@ import {
   getStats,
   getJourney,
   addJourneyItem,
+  updateJourneyItem,
   deleteJourneyItem,
   getSkills,
   addSkill,
+  updateSkill,
   deleteSkill,
   getProjects,
   addProject,
+  updateProject,
   deleteProject,
   getCertificates,
   addCertificate,
+  updateCertificate,
   deleteCertificate,
   getCodingPlatforms,
   addCodingPlatform,
+  updateCodingPlatform,
   deleteCodingPlatform,
   getAggregatedCodingStats,
   getMessages,
@@ -57,6 +62,13 @@ let lastMessageTimestamp = 0;
 let carouselIndex = 0;
 let carouselTimer = null;
 let isAdminAuthenticated = false;
+
+// Admin In-Place Editing Tracking
+let editingSkillId = null;
+let editingProjectId = null;
+let editingTimelineId = null;
+let editingCertId = null;
+let editingPlatformId = null;
 
 /* ==========================================================================
    DOM Ready Initialization
@@ -1048,19 +1060,41 @@ export function openAdminDashboard() {
 /* Pane A: Skills CRUD */
 function initAdminPaneA() {
   const form = document.getElementById('admin-add-skill-form');
+  const submitBtn = document.getElementById('skill-submit-btn');
+  const cancelBtn = document.getElementById('skill-cancel-btn');
   if (!form) return;
+
+  function resetSkillForm() {
+    editingSkillId = null;
+    form.reset();
+    if (submitBtn) submitBtn.textContent = 'Add Skill';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      resetSkillForm();
+    };
+  }
+
   form.onsubmit = (e) => {
     e.preventDefault();
     const name = document.getElementById('skill-input-name').value.trim();
     const category = document.getElementById('skill-input-category').value;
     const level = Number(document.getElementById('skill-input-level').value);
 
-    addSkill({ name, category, level, icon: 'code' });
-    form.reset();
+    if (editingSkillId) {
+      updateSkill(editingSkillId, { name, category, level, icon: 'code' });
+      showToast('Skill updated.', 'success');
+    } else {
+      addSkill({ name, category, level, icon: 'code' });
+      showToast('Skill added.', 'success');
+    }
+
+    resetSkillForm();
     renderAdminSkills();
     renderSkills(getSkills());
     renderStats();
-    showToast('Skill added.', 'success');
   };
 }
 
@@ -1077,26 +1111,81 @@ function renderAdminSkills() {
       <div>
         <strong>${s.name}</strong> (${s.category}) — <span style="color: var(--accent-mint); font-family: var(--font-mono);">${s.level}%</span>
       </div>
-      <button class="btn btn-ghost btn-sm" style="color: var(--accent-rose); padding: 0.2rem 0.5rem;" data-id="${s.id}">Delete</button>
+      <div style="display: flex; gap: 0.4rem; align-items: center;">
+        <button class="btn btn-ghost btn-sm edit-skill-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Edit Skill">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-edit"></use></svg>
+          <span>Edit</span>
+        </button>
+        <button class="btn btn-ghost btn-sm delete-skill-btn" style="color: var(--accent-rose); padding: 0.25rem 0.6rem;" title="Delete Skill">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-trash"></use></svg>
+          <span>Delete</span>
+        </button>
+      </div>
     `;
-    item.querySelector('button').onclick = () => {
+
+    item.querySelector('.edit-skill-btn').onclick = () => {
+      editingSkillId = s.id;
+      document.getElementById('skill-input-name').value = s.name;
+      document.getElementById('skill-input-category').value = s.category;
+      document.getElementById('skill-input-level').value = s.level;
+
+      const submitBtn = document.getElementById('skill-submit-btn');
+      const cancelBtn = document.getElementById('skill-cancel-btn');
+      if (submitBtn) submitBtn.textContent = 'Save Changes';
+      if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+      const form = document.getElementById('admin-add-skill-form');
+      form?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('skill-input-name')?.focus();
+    };
+
+    item.querySelector('.delete-skill-btn').onclick = () => {
+      if (editingSkillId === s.id) {
+        editingSkillId = null;
+        const form = document.getElementById('admin-add-skill-form');
+        form?.reset();
+        const submitBtn = document.getElementById('skill-submit-btn');
+        const cancelBtn = document.getElementById('skill-cancel-btn');
+        if (submitBtn) submitBtn.textContent = 'Add Skill';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+      }
       deleteSkill(s.id);
       renderAdminSkills();
       renderSkills(getSkills());
       renderStats();
       showToast('Skill removed.', 'info');
     };
+
     list.appendChild(item);
   });
 }
 
-/* Pane B: Projects CRUD (with Device File Upload) */
+/* Pane B: Projects CRUD (with Device File Upload & Edit) */
 function initAdminPaneB() {
   const form = document.getElementById('admin-add-project-form');
   const fileInput = document.getElementById('proj-file-upload');
   const preview = document.getElementById('proj-thumb-preview');
   const imageInput = document.getElementById('proj-input-image');
   const aiSuggestBtn = document.getElementById('proj-ai-suggest-btn');
+  const submitBtn = document.getElementById('proj-submit-btn');
+  const cancelBtn = document.getElementById('proj-cancel-btn');
+
+  function resetProjectForm() {
+    editingProjectId = null;
+    form?.reset();
+    if (preview) {
+      preview.src = '';
+      preview.style.display = 'none';
+    }
+    if (submitBtn) submitBtn.textContent = 'Publish Project';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      resetProjectForm();
+    };
+  }
 
   if (fileInput) {
     fileInput.onchange = () => {
@@ -1145,14 +1234,19 @@ function initAdminPaneB() {
       const githubUrl = document.getElementById('proj-input-github').value.trim();
       const featured = document.getElementById('proj-input-featured').checked;
 
-      addProject({ title, category, tags, description, image, demoUrl, githubUrl, featured });
-      form.reset();
-      preview.style.display = 'none';
+      if (editingProjectId) {
+        updateProject(editingProjectId, { title, category, tags, description, image, demoUrl, githubUrl, featured });
+        showToast('Project updated.', 'success');
+      } else {
+        addProject({ title, category, tags, description, image, demoUrl, githubUrl, featured });
+        showToast('Project published.', 'success');
+      }
+
+      resetProjectForm();
       renderAdminProjects();
       renderProjects(getProjects());
       renderCarousel(getProjects());
       renderStats();
-      showToast('Project published.', 'success');
     };
   }
 }
@@ -1171,9 +1265,59 @@ function renderAdminProjects() {
         <strong>${p.title}</strong> (${p.category}) ${p.featured ? '<span style="color: var(--accent-mint); font-size: 0.75rem;">[FEATURED]</span>' : ''}
         <div style="font-size: 0.8rem; color: var(--text-muted);">${(p.tags || []).join(', ')}</div>
       </div>
-      <button class="btn btn-ghost btn-sm" style="color: var(--accent-rose);" data-id="${p.id}">Delete</button>
+      <div style="display: flex; gap: 0.4rem; align-items: center;">
+        <button class="btn btn-ghost btn-sm edit-proj-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Edit Project">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-edit"></use></svg>
+          <span>Edit</span>
+        </button>
+        <button class="btn btn-ghost btn-sm delete-proj-btn" style="color: var(--accent-rose); padding: 0.25rem 0.6rem;" title="Delete Project">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-trash"></use></svg>
+          <span>Delete</span>
+        </button>
+      </div>
     `;
-    item.querySelector('button').onclick = () => {
+
+    item.querySelector('.edit-proj-btn').onclick = () => {
+      editingProjectId = p.id;
+      document.getElementById('proj-input-title').value = p.title || '';
+      document.getElementById('proj-input-category').value = p.category || 'AI & ML';
+      document.getElementById('proj-input-tags').value = Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || '');
+      document.getElementById('proj-input-desc').value = p.description || '';
+      const imageInput = document.getElementById('proj-input-image');
+      const preview = document.getElementById('proj-thumb-preview');
+      imageInput.value = p.image || '';
+      if (p.image) {
+        preview.src = p.image;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
+      document.getElementById('proj-input-demo').value = p.demoUrl || '';
+      document.getElementById('proj-input-github').value = p.githubUrl || '';
+      document.getElementById('proj-input-featured').checked = Boolean(p.featured);
+
+      const submitBtn = document.getElementById('proj-submit-btn');
+      const cancelBtn = document.getElementById('proj-cancel-btn');
+      if (submitBtn) submitBtn.textContent = 'Save Changes';
+      if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+      const form = document.getElementById('admin-add-project-form');
+      form?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('proj-input-title')?.focus();
+    };
+
+    item.querySelector('.delete-proj-btn').onclick = () => {
+      if (editingProjectId === p.id) {
+        editingProjectId = null;
+        const form = document.getElementById('admin-add-project-form');
+        form?.reset();
+        const preview = document.getElementById('proj-thumb-preview');
+        if (preview) preview.style.display = 'none';
+        const submitBtn = document.getElementById('proj-submit-btn');
+        const cancelBtn = document.getElementById('proj-cancel-btn');
+        if (submitBtn) submitBtn.textContent = 'Publish Project';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+      }
       deleteProject(p.id);
       renderAdminProjects();
       renderProjects(getProjects());
@@ -1181,6 +1325,7 @@ function renderAdminProjects() {
       renderStats();
       showToast('Project removed.', 'info');
     };
+
     list.appendChild(item);
   });
 }
@@ -1421,7 +1566,22 @@ function initAdminPaneE() {
 /* Pane F: Timeline CRUD */
 function initAdminPaneF() {
   const form = document.getElementById('admin-add-timeline-form');
+  const submitBtn = document.getElementById('timeline-submit-btn');
+  const cancelBtn = document.getElementById('timeline-cancel-btn');
   if (!form) return;
+
+  function resetTimelineForm() {
+    editingTimelineId = null;
+    form.reset();
+    if (submitBtn) submitBtn.textContent = 'Add Milestone';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      resetTimelineForm();
+    };
+  }
 
   form.onsubmit = (e) => {
     e.preventDefault();
@@ -1431,11 +1591,17 @@ function initAdminPaneF() {
     const date = document.getElementById('timeline-input-date').value.trim();
     const description = document.getElementById('timeline-input-desc').value.trim();
 
-    addJourneyItem({ role, type, company, date, description });
-    form.reset();
+    if (editingTimelineId) {
+      updateJourneyItem(editingTimelineId, { role, type, company, date, description });
+      showToast('Milestone updated.', 'success');
+    } else {
+      addJourneyItem({ role, type, company, date, description });
+      showToast('Milestone added to timeline.', 'success');
+    }
+
+    resetTimelineForm();
     renderAdminTimeline();
     renderJourney(getJourney());
-    showToast('Milestone added to timeline.', 'success');
   };
 }
 
@@ -1452,14 +1618,52 @@ function renderAdminTimeline() {
       <div>
         <strong>${j.role}</strong> @ ${j.company} (${j.date}) [${j.type}]
       </div>
-      <button class="btn btn-ghost btn-sm" style="color: var(--accent-rose);" data-id="${j.id}">Delete</button>
+      <div style="display: flex; gap: 0.4rem; align-items: center;">
+        <button class="btn btn-ghost btn-sm edit-timeline-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Edit Milestone">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-edit"></use></svg>
+          <span>Edit</span>
+        </button>
+        <button class="btn btn-ghost btn-sm delete-timeline-btn" style="color: var(--accent-rose); padding: 0.25rem 0.6rem;" title="Delete Milestone">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-trash"></use></svg>
+          <span>Delete</span>
+        </button>
+      </div>
     `;
-    item.querySelector('button').onclick = () => {
+
+    item.querySelector('.edit-timeline-btn').onclick = () => {
+      editingTimelineId = j.id;
+      document.getElementById('timeline-input-role').value = j.role || '';
+      document.getElementById('timeline-input-type').value = j.type || 'experience';
+      document.getElementById('timeline-input-company').value = j.company || '';
+      document.getElementById('timeline-input-date').value = j.date || '';
+      document.getElementById('timeline-input-desc').value = j.description || '';
+
+      const submitBtn = document.getElementById('timeline-submit-btn');
+      const cancelBtn = document.getElementById('timeline-cancel-btn');
+      if (submitBtn) submitBtn.textContent = 'Save Changes';
+      if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+      const form = document.getElementById('admin-add-timeline-form');
+      form?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('timeline-input-role')?.focus();
+    };
+
+    item.querySelector('.delete-timeline-btn').onclick = () => {
+      if (editingTimelineId === j.id) {
+        editingTimelineId = null;
+        const form = document.getElementById('admin-add-timeline-form');
+        form?.reset();
+        const submitBtn = document.getElementById('timeline-submit-btn');
+        const cancelBtn = document.getElementById('timeline-cancel-btn');
+        if (submitBtn) submitBtn.textContent = 'Add Milestone';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+      }
       deleteJourneyItem(j.id);
       renderAdminTimeline();
       renderJourney(getJourney());
       showToast('Milestone removed.', 'info');
     };
+
     list.appendChild(item);
   });
 }
@@ -1470,6 +1674,25 @@ function initAdminPaneG() {
   const fileInput = document.getElementById('cert-file-upload');
   const preview = document.getElementById('cert-thumb-preview');
   const imageInput = document.getElementById('cert-input-image');
+  const submitBtn = document.getElementById('cert-submit-btn');
+  const cancelBtn = document.getElementById('cert-cancel-btn');
+
+  function resetCertForm() {
+    editingCertId = null;
+    form?.reset();
+    if (preview) {
+      preview.src = '';
+      preview.style.display = 'none';
+    }
+    if (submitBtn) submitBtn.textContent = 'Add Certificate';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      resetCertForm();
+    };
+  }
 
   if (fileInput) {
     fileInput.onchange = () => {
@@ -1496,13 +1719,18 @@ function initAdminPaneG() {
       const skills = document.getElementById('cert-input-skills').value.trim();
       const image = imageInput.value.trim() || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=800&auto=format&fit=crop';
 
-      addCertificate({ title, year, issuer, verifyUrl, skills, image });
-      form.reset();
-      preview.style.display = 'none';
+      if (editingCertId) {
+        updateCertificate(editingCertId, { title, year, issuer, verifyUrl, skills, image });
+        showToast('Certificate updated.', 'success');
+      } else {
+        addCertificate({ title, year, issuer, verifyUrl, skills, image });
+        showToast('Certificate added.', 'success');
+      }
+
+      resetCertForm();
       renderAdminCertificates();
       renderCertificates(getCertificates());
       renderStats();
-      showToast('Certificate added.', 'success');
     };
   }
 }
@@ -1520,15 +1748,64 @@ function renderAdminCertificates() {
       <div>
         <strong>${c.title}</strong> (${c.issuer}, ${c.year})
       </div>
-      <button class="btn btn-ghost btn-sm" style="color: var(--accent-rose);" data-id="${c.id}">Delete</button>
+      <div style="display: flex; gap: 0.4rem; align-items: center;">
+        <button class="btn btn-ghost btn-sm edit-cert-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Edit Certificate">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-edit"></use></svg>
+          <span>Edit</span>
+        </button>
+        <button class="btn btn-ghost btn-sm delete-cert-btn" style="color: var(--accent-rose); padding: 0.25rem 0.6rem;" title="Delete Certificate">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-trash"></use></svg>
+          <span>Delete</span>
+        </button>
+      </div>
     `;
-    item.querySelector('button').onclick = () => {
+
+    item.querySelector('.edit-cert-btn').onclick = () => {
+      editingCertId = c.id;
+      document.getElementById('cert-input-title').value = c.title || '';
+      document.getElementById('cert-input-year').value = c.year || '';
+      document.getElementById('cert-input-issuer').value = c.issuer || '';
+      document.getElementById('cert-input-url').value = c.verifyUrl || '';
+      document.getElementById('cert-input-skills').value = c.skills || '';
+      const imageInput = document.getElementById('cert-input-image');
+      const preview = document.getElementById('cert-thumb-preview');
+      imageInput.value = c.image || '';
+      if (c.image) {
+        preview.src = c.image;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
+
+      const submitBtn = document.getElementById('cert-submit-btn');
+      const cancelBtn = document.getElementById('cert-cancel-btn');
+      if (submitBtn) submitBtn.textContent = 'Save Changes';
+      if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+      const form = document.getElementById('admin-add-cert-form');
+      form?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('cert-input-title')?.focus();
+    };
+
+    item.querySelector('.delete-cert-btn').onclick = () => {
+      if (editingCertId === c.id) {
+        editingCertId = null;
+        const form = document.getElementById('admin-add-cert-form');
+        form?.reset();
+        const preview = document.getElementById('cert-thumb-preview');
+        if (preview) preview.style.display = 'none';
+        const submitBtn = document.getElementById('cert-submit-btn');
+        const cancelBtn = document.getElementById('cert-cancel-btn');
+        if (submitBtn) submitBtn.textContent = 'Add Certificate';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+      }
       deleteCertificate(c.id);
       renderAdminCertificates();
       renderCertificates(getCertificates());
       renderStats();
       showToast('Certificate removed.', 'info');
     };
+
     list.appendChild(item);
   });
 }
@@ -1536,7 +1813,22 @@ function renderAdminCertificates() {
 /* Pane H: Coding Platforms CRUD */
 function initAdminCodingPlatforms() {
   const form = document.getElementById('admin-add-platform-form');
+  const submitBtn = document.getElementById('platform-submit-btn');
+  const cancelBtn = document.getElementById('platform-cancel-btn');
   if (!form) return;
+
+  function resetPlatformForm() {
+    editingPlatformId = null;
+    form.reset();
+    if (submitBtn) submitBtn.textContent = 'Add Platform Profile';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+  }
+
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      resetPlatformForm();
+    };
+  }
 
   form.onsubmit = (e) => {
     e.preventDefault();
@@ -1560,7 +1852,7 @@ function initAdminCodingPlatforms() {
     else if (platform.toLowerCase().includes('codechef')) icon = 'codechef';
     else if (platform.toLowerCase().includes('codolio')) icon = 'codolio';
 
-    addCodingPlatform({
+    const platformData = {
       platform,
       icon,
       handle,
@@ -1575,13 +1867,20 @@ function initAdminCodingPlatforms() {
       hardSolved,
       contestsCount,
       streakDays
-    });
+    };
 
-    form.reset();
+    if (editingPlatformId) {
+      updateCodingPlatform(editingPlatformId, platformData);
+      showToast('Platform profile updated.', 'success');
+    } else {
+      addCodingPlatform(platformData);
+      showToast('Platform profile added.', 'success');
+    }
+
+    resetPlatformForm();
     renderAdminCodingPlatforms();
     renderCodingPlatforms(getCodingPlatforms());
     renderStats();
-    showToast('Platform profile added.', 'success');
   };
 }
 
@@ -1599,15 +1898,61 @@ function renderAdminCodingPlatforms() {
         <strong>${p.platform}</strong> (@${p.handle}) — Rating: <span style="color: var(--accent-mint); font-family: var(--font-mono);">${p.rating}</span> [${p.badge}]
         <div style="font-size: 0.8rem; color: var(--text-muted);">Solved: ${p.totalSolved} (E: ${p.easySolved}, M: ${p.mediumSolved}, H: ${p.hardSolved}) • Contests: ${p.contestsCount}</div>
       </div>
-      <button class="btn btn-ghost btn-sm" style="color: var(--accent-rose);" data-id="${p.id}">Delete</button>
+      <div style="display: flex; gap: 0.4rem; align-items: center;">
+        <button class="btn btn-ghost btn-sm edit-platform-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Edit Platform">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-edit"></use></svg>
+          <span>Edit</span>
+        </button>
+        <button class="btn btn-ghost btn-sm delete-platform-btn" style="color: var(--accent-rose); padding: 0.25rem 0.6rem;" title="Delete Platform">
+          <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-trash"></use></svg>
+          <span>Delete</span>
+        </button>
+      </div>
     `;
-    item.querySelector('button').onclick = () => {
+
+    item.querySelector('.edit-platform-btn').onclick = () => {
+      editingPlatformId = p.id;
+      document.getElementById('platform-input-name').value = p.platform || 'LeetCode';
+      document.getElementById('platform-input-handle').value = p.handle || '';
+      document.getElementById('platform-input-url').value = p.profileUrl || '';
+      document.getElementById('platform-input-rating').value = p.rating || '';
+      document.getElementById('platform-input-max-rating').value = p.maxRating || '';
+      document.getElementById('platform-input-badge').value = p.badge || '';
+      document.getElementById('platform-input-total-solved').value = p.totalSolved || '';
+      document.getElementById('platform-input-easy').value = p.easySolved !== undefined ? p.easySolved : '';
+      document.getElementById('platform-input-medium').value = p.mediumSolved !== undefined ? p.mediumSolved : '';
+      document.getElementById('platform-input-hard').value = p.hardSolved !== undefined ? p.hardSolved : '';
+      document.getElementById('platform-input-ranking').value = p.ranking || '';
+      document.getElementById('platform-input-contests').value = p.contestsCount !== undefined ? p.contestsCount : '';
+      document.getElementById('platform-input-streak').value = p.streakDays !== undefined ? p.streakDays : '';
+
+      const submitBtn = document.getElementById('platform-submit-btn');
+      const cancelBtn = document.getElementById('platform-cancel-btn');
+      if (submitBtn) submitBtn.textContent = 'Save Changes';
+      if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+      const form = document.getElementById('admin-add-platform-form');
+      form?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('platform-input-handle')?.focus();
+    };
+
+    item.querySelector('.delete-platform-btn').onclick = () => {
+      if (editingPlatformId === p.id) {
+        editingPlatformId = null;
+        const form = document.getElementById('admin-add-platform-form');
+        form?.reset();
+        const submitBtn = document.getElementById('platform-submit-btn');
+        const cancelBtn = document.getElementById('platform-cancel-btn');
+        if (submitBtn) submitBtn.textContent = 'Add Platform Profile';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+      }
       deleteCodingPlatform(p.id);
       renderAdminCodingPlatforms();
       renderCodingPlatforms(getCodingPlatforms());
       renderStats();
       showToast('Platform profile removed.', 'info');
     };
+
     list.appendChild(item);
   });
 }

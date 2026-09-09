@@ -428,6 +428,18 @@ export function deleteJourneyItem(id) {
   return true;
 }
 
+export function updateJourneyItem(id, updatedFields) {
+  const db = loadData();
+  const index = (db.journey || []).findIndex(i => i.id === id);
+  if (index === -1) return null;
+  db.journey[index] = {
+    ...db.journey[index],
+    ...updatedFields
+  };
+  saveData(db);
+  return db.journey[index];
+}
+
 export function getSkills() {
   return loadData().skills;
 }
@@ -451,6 +463,19 @@ export function deleteSkill(id) {
   db.skills = db.skills.filter(s => s.id !== id);
   saveData(db);
   return true;
+}
+
+export function updateSkill(id, updatedFields) {
+  const db = loadData();
+  const index = (db.skills || []).findIndex(s => s.id === id);
+  if (index === -1) return null;
+  db.skills[index] = {
+    ...db.skills[index],
+    ...updatedFields,
+    level: Number(updatedFields.level) || db.skills[index].level
+  };
+  saveData(db);
+  return db.skills[index];
 }
 
 export function getProjects() {
@@ -483,6 +508,26 @@ export function deleteProject(id) {
   return true;
 }
 
+export function updateProject(id, updatedFields) {
+  const db = loadData();
+  const index = (db.projects || []).findIndex(p => p.id === id);
+  if (index === -1) return null;
+  const current = db.projects[index];
+  const tags = updatedFields.tags !== undefined
+    ? (Array.isArray(updatedFields.tags) ? updatedFields.tags : (updatedFields.tags || '').split(',').map(t => t.trim()).filter(Boolean))
+    : current.tags;
+
+  db.projects[index] = {
+    ...current,
+    ...updatedFields,
+    tags,
+    featured: updatedFields.featured !== undefined ? Boolean(updatedFields.featured) : current.featured,
+    longDescription: updatedFields.longDescription || updatedFields.description || current.longDescription
+  };
+  saveData(db);
+  return db.projects[index];
+}
+
 export function getCertificates() {
   return loadData().certificates;
 }
@@ -508,6 +553,18 @@ export function deleteCertificate(id) {
   db.certificates = db.certificates.filter(c => c.id !== id);
   saveData(db);
   return true;
+}
+
+export function updateCertificate(id, updatedFields) {
+  const db = loadData();
+  const index = (db.certificates || []).findIndex(c => c.id === id);
+  if (index === -1) return null;
+  db.certificates[index] = {
+    ...db.certificates[index],
+    ...updatedFields
+  };
+  saveData(db);
+  return db.certificates[index];
 }
 
 export function getCodingPlatforms() {
@@ -549,6 +606,33 @@ export function deleteCodingPlatform(id) {
   db.codingPlatforms = (db.codingPlatforms || []).filter(p => p.id !== id);
   saveData(db);
   return true;
+}
+
+export function updateCodingPlatform(id, updatedFields) {
+  const db = loadData();
+  const index = (db.codingPlatforms || []).findIndex(p => p.id === id);
+  if (index === -1) return null;
+
+  const current = db.codingPlatforms[index];
+  const easy = updatedFields.easySolved !== undefined ? Number(updatedFields.easySolved) : current.easySolved;
+  const medium = updatedFields.mediumSolved !== undefined ? Number(updatedFields.mediumSolved) : current.mediumSolved;
+  const hard = updatedFields.hardSolved !== undefined ? Number(updatedFields.hardSolved) : current.hardSolved;
+  const total = Number(updatedFields.totalSolved) || (easy + medium + hard) || current.totalSolved;
+
+  db.codingPlatforms[index] = {
+    ...current,
+    ...updatedFields,
+    totalSolved: total,
+    easySolved: easy,
+    mediumSolved: medium,
+    hardSolved: hard,
+    rating: Number(updatedFields.rating) || current.rating,
+    maxRating: Number(updatedFields.maxRating) || Number(updatedFields.rating) || current.maxRating,
+    contestsCount: updatedFields.contestsCount !== undefined ? Number(updatedFields.contestsCount) : current.contestsCount,
+    streakDays: updatedFields.streakDays !== undefined ? Number(updatedFields.streakDays) : current.streakDays
+  };
+  saveData(db);
+  return db.codingPlatforms[index];
 }
 
 export function getAggregatedCodingStats() {

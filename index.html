@@ -550,7 +550,10 @@
                 <label>Proficiency (%)</label>
                 <input type="number" id="skill-input-level" class="form-input" min="1" max="100" value="88" required />
               </div>
-              <button type="submit" class="btn btn-primary btn-sm">Add Skill</button>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="submit" id="skill-submit-btn" class="btn btn-primary btn-sm">Add Skill</button>
+                <button type="button" id="skill-cancel-btn" class="btn btn-ghost btn-sm" style="display: none;">Cancel</button>
+              </div>
             </form>
             <div id="admin-skills-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
               <!-- Rendered dynamically -->
@@ -617,7 +620,10 @@
                 <label for="proj-input-featured" style="font-size: 0.88rem;">Pin to Hero Featured Carousel</label>
               </div>
 
-              <button type="submit" class="btn btn-primary" style="align-self: flex-start;">Publish Project</button>
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <button type="submit" id="proj-submit-btn" class="btn btn-primary">Publish Project</button>
+                <button type="button" id="proj-cancel-btn" class="btn btn-ghost" style="display: none;">Cancel</button>
+              </div>
             </form>
 
             <div id="admin-projects-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
@@ -774,7 +780,10 @@
                 <label>Description & Architectural Highlights</label>
                 <textarea id="timeline-input-desc" class="form-textarea" required></textarea>
               </div>
-              <button type="submit" class="btn btn-primary" style="align-self: flex-start;">Add Milestone</button>
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <button type="submit" id="timeline-submit-btn" class="btn btn-primary">Add Milestone</button>
+                <button type="button" id="timeline-cancel-btn" class="btn btn-ghost" style="display: none;">Cancel</button>
+              </div>
             </form>
             <div id="admin-timeline-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
               <!-- Rendered dynamically -->
@@ -816,7 +825,10 @@
                 <input type="url" id="cert-input-image" class="form-input" placeholder="Or image URL (https://...)" style="margin-top: 0.5rem;" />
                 <img id="cert-thumb-preview" class="thumbnail-preview" alt="Certificate preview" />
               </div>
-              <button type="submit" class="btn btn-primary" style="align-self: flex-start;">Add Certificate</button>
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <button type="submit" id="cert-submit-btn" class="btn btn-primary">Add Certificate</button>
+                <button type="button" id="cert-cancel-btn" class="btn btn-ghost" style="display: none;">Cancel</button>
+              </div>
             </form>
             <div id="admin-certs-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
               <!-- Rendered dynamically -->
@@ -898,7 +910,10 @@
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary" style="align-self: flex-start;">Add Platform Profile</button>
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <button type="submit" id="platform-submit-btn" class="btn btn-primary">Add Platform Profile</button>
+                <button type="button" id="platform-cancel-btn" class="btn btn-ghost" style="display: none;">Cancel</button>
+              </div>
             </form>
             <div id="admin-platforms-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
               <!-- Rendered dynamically -->
