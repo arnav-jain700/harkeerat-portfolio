@@ -1245,7 +1245,6 @@ function initAdminPaneB() {
     aiSuggestBtn.onclick = async () => {
       const title = document.getElementById('proj-input-title').value.trim();
       const tags = document.getElementById('proj-input-tags').value.trim();
-      const category = document.getElementById('proj-input-category').value;
 
       if (!title) {
         showToast('Please specify a Project Title first.', 'error');
@@ -1254,7 +1253,7 @@ function initAdminPaneB() {
 
       aiSuggestBtn.disabled = true;
       aiSuggestBtn.textContent = 'Generating...';
-      const desc = await suggestProjectDescription(title, tags, category);
+      const desc = await suggestProjectDescription(title, tags);
       document.getElementById('proj-input-desc').value = desc;
       aiSuggestBtn.disabled = false;
       aiSuggestBtn.innerHTML = '<svg width="14" height="14"><use href="/icons.svg#icon-sparkles"></use></svg> AI Suggest Description';
@@ -1265,7 +1264,6 @@ function initAdminPaneB() {
     form.onsubmit = (e) => {
       e.preventDefault();
       const title = document.getElementById('proj-input-title').value.trim();
-      const category = document.getElementById('proj-input-category').value;
       const tags = document.getElementById('proj-input-tags').value;
       const description = document.getElementById('proj-input-desc').value;
       const image = imageInput.value.trim() || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop';
@@ -1274,10 +1272,10 @@ function initAdminPaneB() {
       const featured = document.getElementById('proj-input-featured').checked;
 
       if (editingProjectId) {
-        updateProject(editingProjectId, { title, category, tags, description, image, demoUrl, githubUrl, featured });
+        updateProject(editingProjectId, { title, tags, description, image, demoUrl, githubUrl, featured });
         showToast('Project updated.', 'success');
       } else {
-        addProject({ title, category, tags, description, image, demoUrl, githubUrl, featured });
+        addProject({ title, tags, description, image, demoUrl, githubUrl, featured });
         showToast('Project published.', 'success');
       }
 
@@ -1301,7 +1299,7 @@ function renderAdminProjects() {
     item.style = 'display: flex; justify-content: space-between; align-items: center; background: var(--surface-0); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);';
     item.innerHTML = `
       <div>
-        <strong>${p.title}</strong> (${p.category}) ${p.featured ? '<span style="color: var(--accent-mint); font-size: 0.75rem;">[FEATURED]</span>' : ''}
+        <strong>${p.title}</strong> ${p.featured ? '<span style="color: var(--accent-mint); font-size: 0.75rem;">[FEATURED]</span>' : ''}
         <div style="font-size: 0.8rem; color: var(--text-muted);">${(p.tags || []).join(', ')}</div>
       </div>
       <div style="display: flex; gap: 0.4rem; align-items: center;">
@@ -1319,7 +1317,6 @@ function renderAdminProjects() {
     item.querySelector('.edit-proj-btn').onclick = () => {
       editingProjectId = p.id;
       document.getElementById('proj-input-title').value = p.title || '';
-      document.getElementById('proj-input-category').value = p.category || 'AI & ML';
       document.getElementById('proj-input-tags').value = Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || '');
       document.getElementById('proj-input-desc').value = p.description || '';
       const imageInput = document.getElementById('proj-input-image');

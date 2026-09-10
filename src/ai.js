@@ -150,10 +150,9 @@ Keep the response concise (2-3 short paragraphs), warm, and suggest scheduling a
 /**
  * AI Project Description Suggestion
  */
-export async function suggestProjectDescription(title, tags, category) {
+export async function suggestProjectDescription(title, tags) {
   const prompt = `Write a concise 2-sentence architectural summary and impact statement for a software engineering portfolio project.
 Project Title: ${title}
-Category: ${category}
 Technologies: ${tags}
 
 Format: Return only the project description without commentary.`;
@@ -162,7 +161,7 @@ Format: Return only the project description without commentary.`;
     const res = await callAI([{ role: 'user', content: prompt }], 0.6, 250);
     return res.reply.trim();
   } catch (err) {
-    return `Architected a high-throughput, resilient ${category.toLowerCase()} platform leveraging ${tags}. Engineered with low-latency communication protocols, automated failover mechanisms, and sub-millisecond execution standards.`;
+    return `Architected a high-throughput, resilient software platform leveraging ${tags}. Engineered with low-latency communication protocols, automated failover mechanisms, and sub-millisecond execution standards.`;
   }
 }
 
