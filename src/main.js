@@ -55,7 +55,7 @@ import {
    ========================================================================== */
 
 let activeProjectFilter = 'All';
-let activeSkillCategory = 'All';
+let activeSkillCategory = 'Technical';
 let chatHistory = [];
 let lastMessageTimestamp = 0;
 let carouselIndex = 0;
@@ -528,9 +528,8 @@ function filterAndRenderSkills(allSkills) {
   const grid = document.getElementById('skills-grid');
   if (!grid) return;
 
-  const filtered = activeSkillCategory === 'All'
-    ? allSkills
-    : allSkills.filter(s => (s.category || 'Technical') === activeSkillCategory);
+  const targetCategory = activeSkillCategory === 'Non Technical' ? 'Non Technical' : 'Technical';
+  const filtered = allSkills.filter(s => (s.category || 'Technical') === targetCategory);
 
   grid.innerHTML = '';
 
