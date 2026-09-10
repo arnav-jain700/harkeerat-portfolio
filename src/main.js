@@ -40,6 +40,12 @@ import {
 } from './data.js';
 
 import {
+  syncAllLiveCodingStats,
+  fetchPlatformLiveStats,
+  extractPlatformHandle
+} from './codingStats.js';
+
+import {
   chatWithPortfolioAI,
   draftEmailReply,
   suggestProjectDescription
@@ -712,6 +718,39 @@ function renderCodingPlatforms(platforms) {
     `;
   }
 
+  // Wire sync button in the section header
+  const refreshBtn = document.getElementById('refresh-coding-stats-btn');
+  if (refreshBtn && !refreshBtn.dataset.bound) {
+    refreshBtn.dataset.bound = 'true';
+    refreshBtn.onclick = async () => {
+      const syncIcon = refreshBtn.querySelector('.sync-icon');
+      const textSpan = refreshBtn.querySelector('.sync-btn-text');
+      if (syncIcon) syncIcon.classList.add('spinning');
+      if (textSpan) textSpan.textContent = 'Syncing Live...';
+      refreshBtn.disabled = true;
+
+      showToast('Fetching latest live stats from coding platforms...', 'info');
+
+      try {
+        const res = await syncAllLiveCodingStats();
+        if (res && res.updatedCount > 0) {
+          showToast(`Successfully refreshed live metrics for ${res.updatedCount} platform(s)!`, 'success');
+          renderCodingPlatforms(getCodingPlatforms());
+          renderStats();
+          renderAdminCodingPlatforms();
+        } else {
+          showToast('Live statistics verified (already up to date).', 'info');
+        }
+      } catch (err) {
+        showToast('External coding API unavailable. Displaying cached metrics.', 'info');
+      } finally {
+        if (syncIcon) syncIcon.classList.remove('spinning');
+        if (textSpan) textSpan.textContent = 'Sync Live Stats';
+        refreshBtn.disabled = false;
+      }
+    };
+  }
+
   grid.innerHTML = '';
 
   (platforms || []).forEach(p => {
@@ -737,7 +776,14 @@ function renderCodingPlatforms(platforms) {
             <svg width="22" height="22"><use href="/icons.svg#${iconId}"></use></svg>
           </div>
           <div class="platform-title-group">
-            <h3>${p.platform}</h3>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <h3>${p.platform}</h3>
+              ${p.isLiveSynced ? `
+                <span class="live-indicator-badge" title="Live Synced via Official API">
+                  <span class="live-dot"></span> LIVE
+                </span>
+              ` : ''}
+            </div>
             <span class="platform-handle">@${p.handle}</span>
           </div>
         </div>
@@ -798,6 +844,17 @@ function renderCodingPlatforms(platforms) {
         <span>Contests: <strong>${p.contestsCount || 0}</strong></span>
         <span>Streak: <strong>${p.streakDays || 0}d</strong></span>
       </div>
+
+      ${p.lastSynced ? `
+        <div class="platform-sync-meta">
+          <span style="display: flex; align-items: center; gap: 4px;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-mint);"></span>
+            Live Telemetry Active
+          </span>
+          <span>Synced ${new Date(p.lastSynced).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+      ` : ''}
+
       ${p.profileUrl && p.profileUrl !== '#' ? `
         <a href="${p.profileUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-top: 1rem; width: 100%;">
           <span>View Live Profile</span>
@@ -1797,6 +1854,8 @@ function initAdminCodingPlatforms() {
   const form = document.getElementById('admin-add-platform-form');
   const submitBtn = document.getElementById('platform-submit-btn');
   const cancelBtn = document.getElementById('platform-cancel-btn');
+  const adminSyncAllBtn = document.getElementById('admin-sync-all-cp-btn');
+  const autoFetchBtn = document.getElementById('admin-fetch-single-cp-btn');
   if (!form) return;
 
   function resetPlatformForm() {
@@ -1809,6 +1868,93 @@ function initAdminCodingPlatforms() {
   if (cancelBtn) {
     cancelBtn.onclick = () => {
       resetPlatformForm();
+    };
+  }
+
+  // Sync All with Live APIs in Admin
+  if (adminSyncAllBtn) {
+    adminSyncAllBtn.onclick = async () => {
+      const icon = adminSyncAllBtn.querySelector('.sync-icon');
+      const text = adminSyncAllBtn.querySelector('.admin-sync-btn-text');
+      if (icon) icon.classList.add('spinning');
+      if (text) text.textContent = 'Syncing All...';
+      adminSyncAllBtn.disabled = true;
+
+      showToast('Querying live statistics across all platforms...', 'info');
+      try {
+        const res = await syncAllLiveCodingStats();
+        if (res && res.updatedCount > 0) {
+          showToast(`Updated ${res.updatedCount} of ${res.total} platform(s) with live data!`, 'success');
+        } else {
+          showToast('Sync completed. No new changes found.', 'info');
+        }
+        renderAdminCodingPlatforms();
+        renderCodingPlatforms(getCodingPlatforms());
+        renderStats();
+      } catch (e) {
+        showToast('API sync error: ' + e.message, 'error');
+      } finally {
+        if (icon) icon.classList.remove('spinning');
+        if (text) text.textContent = 'Sync All With Live APIs';
+        adminSyncAllBtn.disabled = false;
+      }
+    };
+  }
+
+  // Auto-Fetch live stats for current form handle
+  if (autoFetchBtn) {
+    autoFetchBtn.onclick = async () => {
+      const platform = document.getElementById('platform-input-name').value;
+      const handle = document.getElementById('platform-input-handle').value.trim();
+      const profileUrl = document.getElementById('platform-input-url').value.trim();
+
+      if (!handle && !profileUrl) {
+        showToast('Please enter a handle or profile URL first.', 'error');
+        document.getElementById('platform-input-handle')?.focus();
+        return;
+      }
+
+      const originalText = autoFetchBtn.innerHTML;
+      autoFetchBtn.innerHTML = '<svg width="14" height="14" class="spinning"><use href="/icons.svg#icon-refresh"></use></svg> <span>Querying live API...</span>';
+      autoFetchBtn.disabled = true;
+
+      try {
+        const res = await fetchPlatformLiveStats({ platform, handle, profileUrl });
+        if (res.success && res.data) {
+          const d = res.data;
+          if (d.handle) document.getElementById('platform-input-handle').value = d.handle;
+          if (!profileUrl) {
+            if (platform.toLowerCase().includes('leetcode')) {
+              document.getElementById('platform-input-url').value = `https://leetcode.com/u/${d.handle}/`;
+            } else if (platform.toLowerCase().includes('codeforces')) {
+              document.getElementById('platform-input-url').value = `https://codeforces.com/profile/${d.handle}`;
+            } else if (platform.toLowerCase().includes('codechef')) {
+              document.getElementById('platform-input-url').value = `https://www.codechef.com/users/${d.handle}`;
+            } else if (platform.toLowerCase().includes('codolio')) {
+              document.getElementById('platform-input-url').value = `https://codolio.com/profile/${d.handle}`;
+            }
+          }
+          if (d.rating !== undefined) document.getElementById('platform-input-rating').value = d.rating;
+          if (d.maxRating !== undefined) document.getElementById('platform-input-max-rating').value = d.maxRating;
+          if (d.badge) document.getElementById('platform-input-badge').value = d.badge;
+          if (d.totalSolved !== undefined) document.getElementById('platform-input-total-solved').value = d.totalSolved;
+          if (d.easySolved !== undefined) document.getElementById('platform-input-easy').value = d.easySolved;
+          if (d.mediumSolved !== undefined) document.getElementById('platform-input-medium').value = d.mediumSolved;
+          if (d.hardSolved !== undefined) document.getElementById('platform-input-hard').value = d.hardSolved;
+          if (d.ranking) document.getElementById('platform-input-ranking').value = d.ranking;
+          if (d.contestsCount !== undefined) document.getElementById('platform-input-contests').value = d.contestsCount;
+          if (d.streakDays !== undefined) document.getElementById('platform-input-streak').value = d.streakDays;
+
+          showToast(`Fetched live metrics for ${d.handle || platform}!`, 'success');
+        } else {
+          showToast(`Live fetch error: ${res.error}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Live API query failed: ${err.message}`, 'error');
+      } finally {
+        autoFetchBtn.innerHTML = originalText;
+        autoFetchBtn.disabled = false;
+      }
     };
   }
 
@@ -1874,13 +2020,26 @@ function renderAdminCodingPlatforms() {
 
   platforms.forEach(p => {
     const item = document.createElement('div');
-    item.style = 'display: flex; justify-content: space-between; align-items: center; background: var(--surface-0); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);';
+    item.style = 'display: flex; justify-content: space-between; align-items: center; background: var(--surface-0); padding: 0.75rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 0.75rem;';
     item.innerHTML = `
       <div>
-        <strong>${p.platform}</strong> (@${p.handle}) — Rating: <span style="color: var(--accent-mint); font-family: var(--font-mono);">${p.rating}</span> [${p.badge}]
-        <div style="font-size: 0.8rem; color: var(--text-muted);">Solved: ${p.totalSolved} (E: ${p.easySolved}, M: ${p.mediumSolved}, H: ${p.hardSolved}) • Contests: ${p.contestsCount}</div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <strong>${p.platform}</strong> (@${p.handle})
+          ${p.isLiveSynced ? `<span class="live-indicator-badge"><span class="live-dot"></span> LIVE</span>` : ''}
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
+          Rating: <span style="color: var(--accent-mint); font-family: var(--font-mono); font-weight: 700;">${p.rating}</span> [${p.badge}] • Rank: ${p.ranking || 'N/A'}
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
+          Solved: <strong>${p.totalSolved}</strong> (E: ${p.easySolved}, M: ${p.mediumSolved}, H: ${p.hardSolved}) • Contests: ${p.contestsCount} • Streak: ${p.streakDays}d
+          ${p.lastSynced ? ` • <span style="color: var(--accent-mint);">Synced: ${new Date(p.lastSynced).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+        </div>
       </div>
       <div style="display: flex; gap: 0.4rem; align-items: center;">
+        <button class="btn btn-ghost btn-sm sync-platform-item-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Fetch Live Data Now">
+          <svg width="13" height="13" style="margin-right: 4px;" class="row-sync-icon"><use href="/icons.svg#icon-refresh"></use></svg>
+          <span>Sync</span>
+        </button>
         <button class="btn btn-ghost btn-sm edit-platform-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Edit Platform">
           <svg width="13" height="13" style="margin-right: 4px;"><use href="/icons.svg#icon-edit"></use></svg>
           <span>Edit</span>
@@ -1891,6 +2050,39 @@ function renderAdminCodingPlatforms() {
         </button>
       </div>
     `;
+
+    // Row live sync
+    const syncRowBtn = item.querySelector('.sync-platform-item-btn');
+    if (syncRowBtn) {
+      syncRowBtn.onclick = async () => {
+        const icon = syncRowBtn.querySelector('.row-sync-icon');
+        if (icon) icon.classList.add('spinning');
+        syncRowBtn.disabled = true;
+        showToast(`Fetching live metrics for ${p.platform}...`, 'info');
+
+        try {
+          const res = await fetchPlatformLiveStats(p);
+          if (res.success && res.data) {
+            updateCodingPlatform(p.id, {
+              ...res.data,
+              lastSynced: new Date().toISOString(),
+              isLiveSynced: true
+            });
+            renderAdminCodingPlatforms();
+            renderCodingPlatforms(getCodingPlatforms());
+            renderStats();
+            showToast(`Successfully updated ${p.platform} (${res.data.handle})!`, 'success');
+          } else {
+            showToast(`Failed to update ${p.platform}: ${res.error}`, 'error');
+          }
+        } catch (err) {
+          showToast(`Error fetching ${p.platform}: ${err.message}`, 'error');
+        } finally {
+          if (icon) icon.classList.remove('spinning');
+          syncRowBtn.disabled = false;
+        }
+      };
+    }
 
     item.querySelector('.edit-platform-btn').onclick = () => {
       editingPlatformId = p.id;
