@@ -1,6 +1,6 @@
 import { getSupabaseClient } from './supabase.js';
 
-export const CACHE_VERSION = 'v2.4.0';
+export const CACHE_VERSION = 'v2.5.0';
 const STORAGE_KEY = 'portfolio_master_cache';
 const VERSION_KEY = 'portfolio_cache_version';
 
@@ -333,13 +333,13 @@ export function loadData() {
         saveData(parsed, false);
       }
     }
-    // Sanitize missing arrays/objects
+    // Sanitize missing or empty arrays/objects
     parsed.profile = parsed.profile || DEFAULT_DATABASE.profile;
-    parsed.journey = Array.isArray(parsed.journey) ? parsed.journey : DEFAULT_DATABASE.journey;
-    parsed.skills = Array.isArray(parsed.skills) ? parsed.skills : DEFAULT_DATABASE.skills;
-    parsed.projects = Array.isArray(parsed.projects) ? parsed.projects : DEFAULT_DATABASE.projects;
-    parsed.certificates = Array.isArray(parsed.certificates) ? parsed.certificates : DEFAULT_DATABASE.certificates;
-    parsed.codingPlatforms = Array.isArray(parsed.codingPlatforms) ? parsed.codingPlatforms : DEFAULT_DATABASE.codingPlatforms;
+    parsed.journey = (Array.isArray(parsed.journey) && parsed.journey.length > 0) ? parsed.journey : DEFAULT_DATABASE.journey;
+    parsed.skills = (Array.isArray(parsed.skills) && parsed.skills.length > 0) ? parsed.skills : DEFAULT_DATABASE.skills;
+    parsed.projects = (Array.isArray(parsed.projects) && parsed.projects.length > 0) ? parsed.projects : DEFAULT_DATABASE.projects;
+    parsed.certificates = (Array.isArray(parsed.certificates) && parsed.certificates.length > 0) ? parsed.certificates : DEFAULT_DATABASE.certificates;
+    parsed.codingPlatforms = (Array.isArray(parsed.codingPlatforms) && parsed.codingPlatforms.length > 0) ? parsed.codingPlatforms : DEFAULT_DATABASE.codingPlatforms;
     parsed.messages = Array.isArray(parsed.messages) ? parsed.messages : DEFAULT_DATABASE.messages;
     parsed.settings = parsed.settings || { ...DEFAULT_DATABASE.settings };
     if (!parsed.settings.supabaseUrl) {
@@ -818,11 +818,11 @@ export async function pullFromCloud() {
       const merged = {
         ...current,
         profile: data.data.profile || current.profile,
-        journey: Array.isArray(data.data.journey) ? data.data.journey : current.journey,
-        skills: Array.isArray(data.data.skills) ? data.data.skills : current.skills,
-        projects: Array.isArray(data.data.projects) ? data.data.projects : current.projects,
-        certificates: Array.isArray(data.data.certificates) ? data.data.certificates : current.certificates,
-        codingPlatforms: Array.isArray(data.data.codingPlatforms) ? data.data.codingPlatforms : current.codingPlatforms,
+        journey: (Array.isArray(data.data.journey) && data.data.journey.length > 0) ? data.data.journey : current.journey,
+        skills: (Array.isArray(data.data.skills) && data.data.skills.length > 0) ? data.data.skills : current.skills,
+        projects: (Array.isArray(data.data.projects) && data.data.projects.length > 0) ? data.data.projects : current.projects,
+        certificates: (Array.isArray(data.data.certificates) && data.data.certificates.length > 0) ? data.data.certificates : current.certificates,
+        codingPlatforms: (Array.isArray(data.data.codingPlatforms) && data.data.codingPlatforms.length > 0) ? data.data.codingPlatforms : current.codingPlatforms,
         messages: current.messages || [],
         settings: {
           ...current.settings,

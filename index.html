@@ -64,9 +64,13 @@
         <li><a href="#certificates" class="nav-link">Certificates</a></li>
         <li><a href="#coding-profiles" class="nav-link">Coding Profiles</a></li>
         <li><a href="#contact" class="nav-link">Contact</a></li>
-        <li style="margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem;">
-          <a href="?print=resume" target="_blank" class="btn btn-secondary btn-sm" style="width: 100%; margin-bottom: 0.5rem;">Print Resume (PDF)</a>
+        <li style="margin-top: 1rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+          <a href="?print=resume" target="_blank" class="btn btn-secondary btn-sm" style="width: 100%;">Print Resume (PDF)</a>
           <a href="?print=cv" target="_blank" class="btn btn-ghost btn-sm" style="width: 100%;">Print CV (PDF)</a>
+          <a href="#admin" id="drawer-admin-link" class="btn btn-ghost btn-sm" style="width: 100%; color: var(--accent-mint); border-color: rgba(0, 245, 160, 0.25);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Admin Portal
+          </a>
         </li>
       </ul>
     </div>
@@ -348,8 +352,14 @@
           <span style="font-weight: 700; color: var(--text-primary);" id="footer-name">Harkeerat Singh</span>
           <span style="color: var(--text-muted); margin-left: 0.5rem;">© 2026. Built with Vanilla JS & Vite.</span>
         </div>
-        <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
-          Zero Framework Overheads • Offline-First Architecture
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+          <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted);">
+            Zero Framework Overheads • Offline-First Architecture
+          </div>
+          <a href="#admin" id="footer-admin-link" class="footer-admin-link" title="Open Admin Console (or press Ctrl+Shift+A)" aria-label="Admin Portal">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <span>Admin</span>
+          </a>
         </div>
       </div>
     </footer>

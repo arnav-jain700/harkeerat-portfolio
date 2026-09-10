@@ -1744,6 +1744,25 @@ section {
   gap: 1.5rem;
 }
 
+.footer-admin-link {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.footer-admin-link:hover {
+  color: var(--accent-mint);
+  border-color: rgba(0, 245, 160, 0.3);
+  background: rgba(0, 245, 160, 0.06);
+}
+
 /* ==========================================================================
    Printable ATS Resume & Full CV Exporter (?print=resume & ?print=cv)
    ========================================================================== */

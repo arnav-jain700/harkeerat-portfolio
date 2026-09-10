@@ -73,15 +73,15 @@ let editingPlatformId = null;
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  initParticleCanvas();
-  initSpotlightEngine();
-  renderAllSections();
-  initCarousel();
-  initChatbot();
-  initContactForm();
-  initNavigation();
-  initAdminConsole();
-  checkUrlRouting();
+  try { initParticleCanvas(); } catch (e) { console.warn('[Init] Particle canvas note:', e); }
+  try { initSpotlightEngine(); } catch (e) { console.warn('[Init] Spotlight engine note:', e); }
+  try { renderAllSections(); } catch (e) { console.error('[Init] renderAllSections error:', e); }
+  try { initCarousel(); } catch (e) { console.warn('[Init] Carousel note:', e); }
+  try { initChatbot(); } catch (e) { console.warn('[Init] Chatbot note:', e); }
+  try { initContactForm(); } catch (e) { console.warn('[Init] Contact form note:', e); }
+  try { initNavigation(); } catch (e) { console.warn('[Init] Navigation note:', e); }
+  try { initAdminConsole(); } catch (e) { console.error('[Init] Admin console note:', e); }
+  try { checkUrlRouting(); } catch (e) { console.warn('[Init] Routing note:', e); }
   syncWithCloud();
 });
 
@@ -94,9 +94,6 @@ async function syncWithCloud() {
     const res = await pullFromCloud();
     if (res && res.success) {
       renderAllSections();
-      renderStats();
-      renderCarousel();
-      renderCodingPlatforms(getCodingPlatforms());
       console.info('[CloudSync] Global state synchronized successfully.');
     }
   } catch (err) {
@@ -230,7 +227,7 @@ function initParticleCanvas() {
         const p2 = nodes[j];
         const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
         if (dist < MAX_DISTANCE) {
-          const alpha = (1 - dist / MAX_DISTANCE) * (isLight ? 0.15 : 0.22);
+          const alpha = (1 - dist / MAX_DISTANCE) * 0.22;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
           ctx.lineTo(p2.x, p2.y);
@@ -324,13 +321,14 @@ function animateCounter(elementId, targetVal) {
    Featured Projects Carousel (Zero Bleed-Through Opaque Solid Surfaces)
    ========================================================================== */
 
-function renderCarousel(projects) {
+function renderCarousel(projects = getProjects()) {
   const track = document.getElementById('carousel-track');
   const dots = document.getElementById('carousel-dots');
   if (!track || !dots) return;
 
-  const featuredList = (projects || []).filter(p => p.featured);
-  const displayList = featuredList.length > 0 ? featuredList : (projects || []).slice(0, 3);
+  const validProjects = (Array.isArray(projects) && projects.length > 0) ? projects : getProjects();
+  const featuredList = (validProjects || []).filter(p => p.featured);
+  const displayList = featuredList.length > 0 ? featuredList : (validProjects || []).slice(0, 3);
 
   track.innerHTML = '';
   dots.innerHTML = '';
@@ -928,8 +926,41 @@ function initAdminConsole() {
   const dashboardModal = document.getElementById('admin-dashboard-modal');
   const dashClose = document.getElementById('admin-dashboard-close');
 
-  if (authClose) authClose.onclick = () => authModal.classList.remove('open');
-  if (dashClose) dashClose.onclick = () => dashboardModal.classList.remove('open');
+  if (authClose) authClose.onclick = () => authModal?.classList.remove('open');
+  if (dashClose) dashClose.onclick = () => dashboardModal?.classList.remove('open');
+
+  // Dismiss on backdrop click
+  if (authModal) {
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) authModal.classList.remove('open');
+    });
+  }
+  if (dashboardModal) {
+    dashboardModal.addEventListener('click', (e) => {
+      if (e.target === dashboardModal) dashboardModal.classList.remove('open');
+    });
+  }
+
+  // Admin link in footer
+  const footerAdminLink = document.getElementById('footer-admin-link');
+  if (footerAdminLink) {
+    footerAdminLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      openAdminAuthOrDashboard();
+    });
+  }
+
+  // Keyboard shortcut Ctrl+Shift+A / Cmd+Shift+A & ESC
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+      e.preventDefault();
+      openAdminAuthOrDashboard();
+    }
+    if (e.key === 'Escape') {
+      authModal?.classList.remove('open');
+      dashboardModal?.classList.remove('open');
+    }
+  });
 
   if (authForm) {
     authForm.onsubmit = async (e) => {
@@ -1916,6 +1947,16 @@ function initNavigation() {
         backdrop.classList.remove('open');
       };
     });
+
+    const drawerAdminLink = document.getElementById('drawer-admin-link');
+    if (drawerAdminLink) {
+      drawerAdminLink.onclick = (e) => {
+        e.preventDefault();
+        drawer.classList.remove('open');
+        backdrop.classList.remove('open');
+        openAdminAuthOrDashboard();
+      };
+    }
   }
 
   // Active section spy
@@ -1944,17 +1985,36 @@ function initNavigation() {
    URL Routing (?admin, ?print=resume, ?print=cv)
    ========================================================================== */
 
+export function openAdminAuthOrDashboard() {
+  const authModal = document.getElementById('admin-auth-modal');
+  if (isAdminAuthenticated) {
+    openAdminDashboard();
+  } else if (authModal) {
+    authModal.classList.add('open');
+    const passInput = document.getElementById('admin-passcode-input');
+    if (passInput) {
+      setTimeout(() => {
+        passInput.focus();
+        passInput.select();
+      }, 150);
+    }
+  }
+}
+
 function checkUrlRouting() {
   const urlParams = new URLSearchParams(window.location.search);
+  const pathname = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+  const hash = window.location.hash.toLowerCase();
 
-  // Hidden admin access
-  if (urlParams.has('admin')) {
-    const authModal = document.getElementById('admin-auth-modal');
-    if (isAdminAuthenticated) {
-      openAdminDashboard();
-    } else if (authModal) {
-      authModal.classList.add('open');
-    }
+  // Hidden admin access via ?admin, /admin, #admin, or #/admin
+  const isAdminRoute = urlParams.has('admin') ||
+                       pathname === '/admin' ||
+                       pathname.endsWith('/admin') ||
+                       hash === '#admin' ||
+                       hash === '#/admin';
+
+  if (isAdminRoute) {
+    openAdminAuthOrDashboard();
   }
 
   // Printable ATS Resume / CV
@@ -1963,6 +2023,13 @@ function checkUrlRouting() {
     renderAtsPrintView(printMode);
   }
 }
+
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.toLowerCase();
+  if (hash === '#admin' || hash === '#/admin') {
+    openAdminAuthOrDashboard();
+  }
+});
 
 function renderAtsPrintView(mode) {
   const printContainer = document.getElementById('print-container');
