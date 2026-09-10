@@ -54,7 +54,6 @@ import {
    State & Global Singletons
    ========================================================================== */
 
-let activeProjectFilter = 'All';
 let activeSkillCategory = 'Technical';
 let chatHistory = [];
 let lastMessageTimestamp = 0;
@@ -559,32 +558,12 @@ function filterAndRenderSkills(allSkills) {
 
 function renderProjects(projects) {
   const grid = document.getElementById('projects-grid');
-  const tabs = document.getElementById('project-filter-tabs');
-  if (!grid || !tabs) return;
-
-  tabs.querySelectorAll('.filter-tab-btn').forEach(btn => {
-    btn.onclick = () => {
-      tabs.querySelectorAll('.filter-tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeProjectFilter = btn.dataset.tag;
-      filterAndRenderProjects(projects);
-    };
-  });
-
-  filterAndRenderProjects(projects);
-}
-
-function filterAndRenderProjects(allProjects) {
-  const grid = document.getElementById('projects-grid');
   if (!grid) return;
 
-  const filtered = activeProjectFilter === 'All'
-    ? allProjects
-    : allProjects.filter(p => p.category === activeProjectFilter || (p.tags || []).includes(activeProjectFilter));
-
+  const allProjects = projects || getProjects() || [];
   grid.innerHTML = '';
 
-  filtered.forEach(proj => {
+  allProjects.forEach(proj => {
     const card = document.createElement('div');
     card.className = 'bento-card project-card';
     card.innerHTML = `
@@ -593,7 +572,7 @@ function filterAndRenderProjects(allProjects) {
       </div>
       <div class="project-card-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-          <span class="card-category-badge">${proj.category}</span>
+          <span class="card-category-badge">${proj.category || 'Project'}</span>
           ${proj.featured ? `<span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-mint);">Featured</span>` : ''}
         </div>
         <h3>${proj.title}</h3>
