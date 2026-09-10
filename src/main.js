@@ -1932,6 +1932,8 @@ function initAdminCodingPlatforms() {
               document.getElementById('platform-input-url').value = `https://www.codechef.com/users/${d.handle}`;
             } else if (platform.toLowerCase().includes('codolio')) {
               document.getElementById('platform-input-url').value = `https://codolio.com/profile/${d.handle}`;
+            } else if (platform.toLowerCase().includes('geeks') || platform.toLowerCase().includes('gfg')) {
+              document.getElementById('platform-input-url').value = `https://www.geeksforgeeks.org/profile/${d.handle}`;
             }
           }
           if (d.rating !== undefined) document.getElementById('platform-input-rating').value = d.rating;
@@ -1978,6 +1980,7 @@ function initAdminCodingPlatforms() {
     if (platform.toLowerCase().includes('leetcode')) icon = 'leetcode';
     else if (platform.toLowerCase().includes('codeforces')) icon = 'codeforces';
     else if (platform.toLowerCase().includes('codechef')) icon = 'codechef';
+    else if (platform.toLowerCase().includes('geeks') || platform.toLowerCase().includes('gfg')) icon = 'geeksforgeeks';
     else if (platform.toLowerCase().includes('codolio')) icon = 'codolio';
 
     const platformData = {

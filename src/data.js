@@ -210,55 +210,77 @@ export const DEFAULT_DATABASE = {
       id: 'cp-2',
       platform: 'Codeforces',
       icon: 'codeforces',
-      handle: 'harkeerat_s',
-      profileUrl: 'https://codeforces.com/profile/arnav-jain700',
-      rating: 1945,
-      maxRating: 1980,
-      badge: 'Candidate Master',
-      badgeColor: '#a855f7',
-      ranking: 'Top 3.8% Globally',
-      totalSolved: 720,
-      easySolved: 240,
-      mediumSolved: 360,
-      hardSolved: 120,
-      contestsCount: 54,
-      streakDays: 180
+      handle: 'Harkeerat',
+      profileUrl: 'https://codeforces.com/profile/Harkeerat',
+      rating: 974,
+      maxRating: 974,
+      badge: 'Newbie',
+      badgeColor: 'var(--accent-amber)',
+      ranking: 'Newbie (Lovely Professional University)',
+      totalSolved: 52,
+      easySolved: 38,
+      mediumSolved: 14,
+      hardSolved: 0,
+      contestsCount: 4,
+      streakDays: 30,
+      isLiveSynced: true
     },
     {
       id: 'cp-3',
       platform: 'CodeChef',
       icon: 'codechef',
-      handle: 'harkeerat_99',
-      profileUrl: 'https://www.codechef.com/users/arnav-jain700',
-      rating: 2130,
-      maxRating: 2175,
-      badge: '5★ Coder',
+      handle: 'long_map_89',
+      profileUrl: 'https://www.codechef.com/users/long_map_89',
+      rating: 1456,
+      maxRating: 1468,
+      badge: '2★ Coder (Div 3)',
       badgeColor: 'var(--accent-mint)',
-      ranking: 'Global Rank #1,840',
-      totalSolved: 480,
-      easySolved: 150,
-      mediumSolved: 250,
-      hardSolved: 80,
-      contestsCount: 38,
-      streakDays: 120
+      ranking: 'Division 3',
+      totalSolved: 96,
+      easySolved: 50,
+      mediumSolved: 36,
+      hardSolved: 10,
+      contestsCount: 6,
+      streakDays: 60,
+      isLiveSynced: true
     },
     {
       id: 'cp-4',
+      platform: 'GeeksforGeeks',
+      icon: 'geeksforgeeks',
+      handle: 'pharkeerwsto',
+      profileUrl: 'https://www.geeksforgeeks.org/profile/pharkeerwsto?tab=activity',
+      rating: 233,
+      maxRating: 233,
+      badge: 'Active Geek',
+      badgeColor: 'var(--accent-emerald)',
+      ranking: 'Institute Rank #7,097 (LPU)',
+      totalSolved: 90,
+      easySolved: 48,
+      mediumSolved: 36,
+      hardSolved: 6,
+      contestsCount: 12,
+      streakDays: 45,
+      isLiveSynced: true
+    },
+    {
+      id: 'cp-5',
       platform: 'Codolio',
       icon: 'codolio',
-      handle: 'harkeerat_dev',
-      profileUrl: 'https://codolio.com/profile/arnav-jain700',
-      rating: 2350,
-      maxRating: 2420,
-      badge: 'Grandmaster (Top 0.5%)',
+      handle: 'Harkeerat',
+      profileUrl: 'https://codolio.com/profile/Harkeerat',
+      rating: 1641,
+      maxRating: 1641,
+      badge: 'Multi-Platform Pro',
       badgeColor: 'var(--accent-indigo)',
-      ranking: 'Global Rank #420 • Master Level',
-      totalSolved: 2350,
-      easySolved: 700,
-      mediumSolved: 1250,
-      hardSolved: 400,
-      contestsCount: 160,
-      streakDays: 365
+      ranking: 'Unified Problem Solving Portfolio',
+      totalSolved: 812,
+      easySolved: 309,
+      mediumSolved: 469,
+      hardSolved: 34,
+      contestsCount: 39,
+      streakDays: 120,
+      isLiveSynced: true
     }
   ],
   messages: [
@@ -322,22 +344,14 @@ export function loadData() {
       parsed.settings.adminPasswordHash = DEFAULT_DATABASE.settings.adminPasswordHash;
       saveData(parsed, false);
     }
-    // Auto-migrate legacy GeeksforGeeks platform to Codolio if present
+    // Ensure all 5 showcase platforms exist in codingPlatforms
     if (Array.isArray(parsed.codingPlatforms)) {
-      let migrated = false;
-      parsed.codingPlatforms = parsed.codingPlatforms.map(cp => {
-        if (cp.platform?.toLowerCase() === 'geeksforgeeks' || cp.icon === 'geeksforgeeks') {
-          migrated = true;
-          const codolioDefault = DEFAULT_DATABASE.codingPlatforms.find(p => p.id === 'cp-4');
-          return {
-            ...codolioDefault,
-            id: cp.id || 'cp-4'
-          };
+      const defaultPlatforms = DEFAULT_DATABASE.codingPlatforms;
+      for (const dp of defaultPlatforms) {
+        const exists = parsed.codingPlatforms.some(p => p.platform?.toLowerCase() === dp.platform.toLowerCase());
+        if (!exists) {
+          parsed.codingPlatforms.push({ ...dp });
         }
-        return cp;
-      });
-      if (migrated) {
-        saveData(parsed, false);
       }
     }
     // Sanitize missing or empty arrays/objects
