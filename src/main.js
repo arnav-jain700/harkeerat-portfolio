@@ -702,10 +702,12 @@ function renderCodingPlatforms(platforms) {
       <div class="telemetry-stat-card bento-card">
         <div class="telemetry-num">${stats.totalSolved.toLocaleString()}+</div>
         <div class="telemetry-label">Total Problems Solved</div>
+        <div style="font-size: 0.72rem; color: var(--accent-mint); font-family: var(--font-mono); margin-top: 0.35rem;">via Codolio</div>
       </div>
-      <div class="telemetry-stat-card bento-card">
-        <div class="telemetry-num">${stats.maxRating}</div>
-        <div class="telemetry-label">Peak Contest Rating</div>
+      <div class="telemetry-stat-card bento-card rating-telemetry-card">
+        <div class="telemetry-num">${stats.leetcodeRating || stats.maxRating}</div>
+        <div class="telemetry-label">LeetCode Contest Rating</div>
+        <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.35rem;">Peak: ${stats.leetcodeMaxRating || stats.maxRating}${stats.leetcodeBadge ? ` • ${stats.leetcodeBadge}` : ''}</div>
       </div>
       <div class="telemetry-stat-card bento-card">
         <div class="telemetry-num">${stats.maxStreak}+ Days</div>
@@ -714,6 +716,7 @@ function renderCodingPlatforms(platforms) {
       <div class="telemetry-stat-card bento-card">
         <div class="telemetry-num">${stats.totalContests}</div>
         <div class="telemetry-label">Global Contests Attended</div>
+        <div style="font-size: 0.72rem; color: var(--accent-mint); font-family: var(--font-mono); margin-top: 0.35rem;">via Codolio</div>
       </div>
     `;
   }
@@ -757,6 +760,10 @@ function renderCodingPlatforms(platforms) {
     const card = document.createElement('div');
     card.className = 'bento-card platform-card';
 
+    const pName = (p.platform || '').toLowerCase();
+    const isCodolio = pName.includes('codolio');
+    const isLeetCode = pName.includes('leetcode');
+
     const total = Number(p.totalSolved) || 1;
     const easy = Number(p.easySolved) || 0;
     const medium = Number(p.mediumSolved) || 0;
@@ -768,6 +775,100 @@ function renderCodingPlatforms(platforms) {
 
     // Determine icon
     const iconId = p.icon ? `icon-${p.icon}` : 'icon-code';
+
+    // RATING: Only LeetCode's rating should be visible
+    let ratingBlock = '';
+    if (isLeetCode) {
+      ratingBlock = `
+        <div class="platform-rating-section">
+          <div class="rating-primary">
+            <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-mono);">Contest Rating</span>
+            <div class="rating-value">${p.rating}</div>
+            ${p.maxRating ? `<div class="rating-max-label">Peak: ${p.maxRating}</div>` : ''}
+          </div>
+          <div class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
+            ${p.badge}
+          </div>
+        </div>
+      `;
+    } else if (p.badge) {
+      ratingBlock = `
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
+            ${p.badge}
+          </span>
+        </div>
+      `;
+    }
+
+    // RANKING / TAG
+    const rankingBlock = p.ranking ? `
+      <div class="platform-rank-text">
+        <svg width="14" height="14" style="color: var(--accent-mint);"><use href="/icons.svg#icon-target"></use></svg>
+        <span>${p.ranking}</span>
+      </div>
+    ` : '';
+
+    // PROBLEMS SOLVED: Only Codolio should display problems solved
+    let solvedBlock = '';
+    if (isCodolio) {
+      solvedBlock = `
+        <div class="solved-breakdown-box">
+          <div class="solved-header-row">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Problems Solved</span>
+            <span class="solved-total-count">${p.totalSolved}</span>
+          </div>
+
+          <div class="difficulty-bar-wrap" title="Easy: ${easy} | Medium: ${medium} | Hard: ${hard}">
+            <div class="diff-segment easy" style="width: ${easyPct}%;"></div>
+            <div class="diff-segment medium" style="width: ${medPct}%;"></div>
+            <div class="diff-segment hard" style="width: ${hardPct}%;"></div>
+          </div>
+
+          <div class="difficulty-legend-row">
+            <div class="legend-item">
+              <span class="legend-dot" style="background: var(--accent-emerald);"></span>
+              <span>Easy: ${easy}</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: var(--accent-amber);"></span>
+              <span>Med: ${medium}</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: var(--accent-rose);"></span>
+              <span>Hard: ${hard}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // CONTESTS & STREAK: Only Codolio should display contests
+    const footerMetaBlock = `
+      <div class="platform-footer-meta" style="margin-top: ${isCodolio ? '0' : '0.5rem'};">
+        ${isCodolio ? `<span>Contests: <strong>${p.contestsCount || 0}</strong></span>` : ''}
+        <span>Streak: <strong>${p.streakDays || 0}d</strong></span>
+      </div>
+    `;
+
+    // LIVE SYNC META
+    const syncMetaBlock = p.lastSynced ? `
+      <div class="platform-sync-meta">
+        <span style="display: flex; align-items: center; gap: 4px;">
+          <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-mint);"></span>
+          Live Telemetry Active
+        </span>
+        <span>Synced ${new Date(p.lastSynced).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      </div>
+    ` : '';
+
+    // PROFILE LINK BUTTON
+    const profileLinkBlock = (p.profileUrl && p.profileUrl !== '#') ? `
+      <a href="${p.profileUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-top: auto; width: 100%; padding-top: 0.6rem; padding-bottom: 0.6rem;">
+        <span>View Live Profile</span>
+        <svg width="14" height="14"><use href="/icons.svg#icon-external-link"></use></svg>
+      </a>
+    ` : '';
 
     card.innerHTML = `
       <div class="platform-card-header">
@@ -794,73 +895,12 @@ function renderCodingPlatforms(platforms) {
         ` : ''}
       </div>
 
-      <div class="platform-rating-section">
-        <div class="rating-primary">
-          <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-mono);">Contest Rating</span>
-          <div class="rating-value">${p.rating}</div>
-          ${p.maxRating ? `<div class="rating-max-label">Peak: ${p.maxRating}</div>` : ''}
-        </div>
-        <div class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
-          ${p.badge}
-        </div>
-      </div>
-
-      ${p.ranking ? `
-        <div class="platform-rank-text">
-          <svg width="14" height="14" style="color: var(--accent-mint);"><use href="/icons.svg#icon-target"></use></svg>
-          <span>${p.ranking}</span>
-        </div>
-      ` : ''}
-
-      <div class="solved-breakdown-box">
-        <div class="solved-header-row">
-          <span style="font-size: 0.85rem; color: var(--text-secondary);">Problems Solved</span>
-          <span class="solved-total-count">${p.totalSolved}</span>
-        </div>
-
-        <div class="difficulty-bar-wrap" title="Easy: ${easy} | Medium: ${medium} | Hard: ${hard}">
-          <div class="diff-segment easy" style="width: ${easyPct}%;"></div>
-          <div class="diff-segment medium" style="width: ${medPct}%;"></div>
-          <div class="diff-segment hard" style="width: ${hardPct}%;"></div>
-        </div>
-
-        <div class="difficulty-legend-row">
-          <div class="legend-item">
-            <span class="legend-dot" style="background: var(--accent-emerald);"></span>
-            <span>Easy: ${easy}</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot" style="background: var(--accent-amber);"></span>
-            <span>Med: ${medium}</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot" style="background: var(--accent-rose);"></span>
-            <span>Hard: ${hard}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="platform-footer-meta">
-        <span>Contests: <strong>${p.contestsCount || 0}</strong></span>
-        <span>Streak: <strong>${p.streakDays || 0}d</strong></span>
-      </div>
-
-      ${p.lastSynced ? `
-        <div class="platform-sync-meta">
-          <span style="display: flex; align-items: center; gap: 4px;">
-            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-mint);"></span>
-            Live Telemetry Active
-          </span>
-          <span>Synced ${new Date(p.lastSynced).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-        </div>
-      ` : ''}
-
-      ${p.profileUrl && p.profileUrl !== '#' ? `
-        <a href="${p.profileUrl}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="margin-top: 1rem; width: 100%;">
-          <span>View Live Profile</span>
-          <svg width="14" height="14"><use href="/icons.svg#icon-external-link"></use></svg>
-        </a>
-      ` : ''}
+      ${ratingBlock}
+      ${rankingBlock}
+      ${solvedBlock}
+      ${footerMetaBlock}
+      ${syncMetaBlock}
+      ${profileLinkBlock}
     `;
 
     grid.appendChild(card);

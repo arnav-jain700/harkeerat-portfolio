@@ -195,9 +195,9 @@ export const DEFAULT_DATABASE = {
       profileUrl: 'https://leetcode.com/u/Harkeerat2006/',
       rating: 1636,
       maxRating: 1641,
-      badge: 'Active Solver',
+      badge: 'Top 19.9%',
       badgeColor: 'var(--accent-mint)',
-      ranking: 'Top 19.9% (Global Rank #172,419)',
+      ranking: 'Global Rank #172,419',
       totalSolved: 574,
       easySolved: 173,
       mediumSolved: 383,
@@ -662,23 +662,42 @@ export function updateCodingPlatform(id, updatedFields) {
 
 export function getAggregatedCodingStats() {
   const platforms = getCodingPlatforms();
+  
+  // Codolio is the single source of truth for problems solved and contests
+  const codolio = platforms.find(p => (p.platform || '').toLowerCase().includes('codolio'));
+  const leetcode = platforms.find(p => (p.platform || '').toLowerCase().includes('leetcode'));
+
   let totalSolved = 0;
   let totalEasy = 0;
   let totalMedium = 0;
   let totalHard = 0;
   let totalContests = 0;
-  let maxRating = 0;
   let maxStreak = 0;
 
+  if (codolio) {
+    totalSolved = Number(codolio.totalSolved) || 0;
+    totalEasy = Number(codolio.easySolved) || 0;
+    totalMedium = Number(codolio.mediumSolved) || 0;
+    totalHard = Number(codolio.hardSolved) || 0;
+    totalContests = Number(codolio.contestsCount) || 0;
+  } else {
+    platforms.forEach(p => {
+      totalSolved += Number(p.totalSolved) || 0;
+      totalEasy += Number(p.easySolved) || 0;
+      totalMedium += Number(p.mediumSolved) || 0;
+      totalHard += Number(p.hardSolved) || 0;
+      totalContests += Number(p.contestsCount) || 0;
+    });
+  }
+
   platforms.forEach(p => {
-    totalSolved += Number(p.totalSolved) || 0;
-    totalEasy += Number(p.easySolved) || 0;
-    totalMedium += Number(p.mediumSolved) || 0;
-    totalHard += Number(p.hardSolved) || 0;
-    totalContests += Number(p.contestsCount) || 0;
-    if (Number(p.maxRating) > maxRating) maxRating = Number(p.maxRating);
     if (Number(p.streakDays) > maxStreak) maxStreak = Number(p.streakDays);
   });
+
+  const leetcodeRating = leetcode ? (Number(leetcode.rating) || 0) : 0;
+  const leetcodeMaxRating = leetcode ? (Number(leetcode.maxRating) || leetcodeRating) : 0;
+  const leetcodeBadge = leetcode ? (leetcode.badge || '') : '';
+  const leetcodeRank = leetcode ? (leetcode.ranking || '') : '';
 
   return {
     totalSolved,
@@ -686,8 +705,12 @@ export function getAggregatedCodingStats() {
     totalMedium,
     totalHard,
     totalContests,
-    maxRating,
-    maxStreak: maxStreak || 365,
+    maxRating: leetcodeMaxRating || leetcodeRating,
+    leetcodeRating,
+    leetcodeMaxRating,
+    leetcodeBadge,
+    leetcodeRank,
+    maxStreak: maxStreak || 120,
     platformsCount: platforms.length
   };
 }
