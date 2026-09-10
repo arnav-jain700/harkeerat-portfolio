@@ -1,6 +1,6 @@
 import { getSupabaseClient } from './supabase.js';
 
-export const CACHE_VERSION = 'v2.5.0';
+export const CACHE_VERSION = 'v2.6.0';
 const STORAGE_KEY = 'portfolio_master_cache';
 const VERSION_KEY = 'portfolio_cache_version';
 
@@ -59,26 +59,32 @@ export const DEFAULT_DATABASE = {
     }
   ],
   skills: [
-    { id: 's-1', name: 'TypeScript / JavaScript (ESNext)', icon: 'code' },
-    { id: 's-2', name: 'Framework-less Vanilla Architecture & WebGL', icon: 'layers' },
-    { id: 's-3', name: 'React, Next.js & Micro-Frontends', icon: 'code' },
-    { id: 's-4', name: 'Modern CSS & Performance Profiling', icon: 'sparkles' },
-    { id: 's-5', name: 'Node.js, Express & Fastify', icon: 'terminal' },
-    { id: 's-6', name: 'Golang Distributed Microservices', icon: 'cpu' },
-    { id: 's-7', name: 'Python (FastAPI, AsyncIO, PyTorch)', icon: 'terminal' },
-    { id: 's-8', name: 'gRPC, WebSockets & Event-Driven APIs', icon: 'layers' },
-    { id: 's-9', name: 'PostgreSQL & pgvector Optimization', icon: 'database' },
-    { id: 's-10', name: 'Redis Cache & Pub/Sub Streams', icon: 'database' },
-    { id: 's-11', name: 'Vector DBs (Qdrant, Milvus, Supabase)', icon: 'database' },
-    { id: 's-12', name: 'Apache Kafka & Distributed Message Queues', icon: 'layers' },
-    { id: 's-13', name: 'Docker, Podman & Container Sandboxing', icon: 'cloud' },
-    { id: 's-14', name: 'Kubernetes (CKA), Helm & Service Mesh', icon: 'cloud' },
-    { id: 's-15', name: 'AWS Cloud Infrastructure (ECS, Lambda, S3, RDS)', icon: 'cloud' },
-    { id: 's-16', name: 'Terraform, CI/CD GitHub Actions & Observability', icon: 'shield' },
-    { id: 's-17', name: 'Groq API, LLaMA 3.3 & vLLM High-Speed Serving', icon: 'sparkles' },
-    { id: 's-18', name: 'RAG Systems, Semantic Search & Chunking', icon: 'target' },
-    { id: 's-19', name: 'LLM Agentic Tool-Use & Prompt Engineering', icon: 'bot' },
-    { id: 's-20', name: 'Model Evaluation, Fine-Tuning & Quantization', icon: 'cpu' }
+    { id: 's-1', name: 'TypeScript / JavaScript (ESNext)', category: 'Technical', icon: 'code' },
+    { id: 's-2', name: 'Framework-less Vanilla Architecture & WebGL', category: 'Technical', icon: 'layers' },
+    { id: 's-3', name: 'React, Next.js & Micro-Frontends', category: 'Technical', icon: 'code' },
+    { id: 's-4', name: 'Modern CSS & Performance Profiling', category: 'Technical', icon: 'sparkles' },
+    { id: 's-5', name: 'Node.js, Express & Fastify', category: 'Technical', icon: 'terminal' },
+    { id: 's-6', name: 'Golang Distributed Microservices', category: 'Technical', icon: 'cpu' },
+    { id: 's-7', name: 'Python (FastAPI, AsyncIO, PyTorch)', category: 'Technical', icon: 'terminal' },
+    { id: 's-8', name: 'gRPC, WebSockets & Event-Driven APIs', category: 'Technical', icon: 'layers' },
+    { id: 's-9', name: 'PostgreSQL & pgvector Optimization', category: 'Technical', icon: 'database' },
+    { id: 's-10', name: 'Redis Cache & Pub/Sub Streams', category: 'Technical', icon: 'database' },
+    { id: 's-11', name: 'Vector DBs (Qdrant, Milvus, Supabase)', category: 'Technical', icon: 'database' },
+    { id: 's-12', name: 'Apache Kafka & Distributed Message Queues', category: 'Technical', icon: 'layers' },
+    { id: 's-13', name: 'Docker, Podman & Container Sandboxing', category: 'Technical', icon: 'cloud' },
+    { id: 's-14', name: 'Kubernetes (CKA), Helm & Service Mesh', category: 'Technical', icon: 'cloud' },
+    { id: 's-15', name: 'AWS Cloud Infrastructure (ECS, Lambda, S3, RDS)', category: 'Technical', icon: 'cloud' },
+    { id: 's-16', name: 'Terraform, CI/CD GitHub Actions & Observability', category: 'Technical', icon: 'shield' },
+    { id: 's-17', name: 'Groq API, LLaMA 3.3 & vLLM High-Speed Serving', category: 'Technical', icon: 'sparkles' },
+    { id: 's-18', name: 'RAG Systems, Semantic Search & Chunking', category: 'Technical', icon: 'target' },
+    { id: 's-19', name: 'LLM Agentic Tool-Use & Prompt Engineering', category: 'Technical', icon: 'bot' },
+    { id: 's-20', name: 'Model Evaluation, Fine-Tuning & Quantization', category: 'Technical', icon: 'cpu' },
+    { id: 's-21', name: 'Engineering Mentorship & Technical Leadership', category: 'Non Technical', icon: 'award' },
+    { id: 's-22', name: 'System Architecture RFCs & Tech Strategy', category: 'Non Technical', icon: 'layers' },
+    { id: 's-23', name: 'Agile Delivery & Scrum Methodology', category: 'Non Technical', icon: 'activity' },
+    { id: 's-24', name: 'Cross-Functional Product Collaboration', category: 'Non Technical', icon: 'target' },
+    { id: 's-25', name: 'Technical Writing & Architecture Specs', category: 'Non Technical', icon: 'file-text' },
+    { id: 's-26', name: 'Stakeholder Alignment & Executive Comms', category: 'Non Technical', icon: 'briefcase' }
   ],
   projects: [
     {
@@ -337,6 +343,16 @@ export function loadData() {
     parsed.profile = parsed.profile || DEFAULT_DATABASE.profile;
     parsed.journey = (Array.isArray(parsed.journey) && parsed.journey.length > 0) ? parsed.journey : DEFAULT_DATABASE.journey;
     parsed.skills = (Array.isArray(parsed.skills) && parsed.skills.length > 0) ? parsed.skills : DEFAULT_DATABASE.skills;
+    parsed.skills = parsed.skills.map(s => ({
+      ...s,
+      category: s.category || 'Technical'
+    }));
+    const hasNonTech = parsed.skills.some(s => s.category === 'Non Technical');
+    if (!hasNonTech) {
+      const defaultNonTech = DEFAULT_DATABASE.skills.filter(s => s.category === 'Non Technical');
+      parsed.skills.push(...defaultNonTech);
+      saveData(parsed, false);
+    }
     parsed.projects = (Array.isArray(parsed.projects) && parsed.projects.length > 0) ? parsed.projects : DEFAULT_DATABASE.projects;
     parsed.certificates = (Array.isArray(parsed.certificates) && parsed.certificates.length > 0) ? parsed.certificates : DEFAULT_DATABASE.certificates;
     parsed.codingPlatforms = (Array.isArray(parsed.codingPlatforms) && parsed.codingPlatforms.length > 0) ? parsed.codingPlatforms : DEFAULT_DATABASE.codingPlatforms;
@@ -445,6 +461,7 @@ export function addSkill(skill) {
   const newSkill = {
     id: 's-' + Date.now(),
     name: skill.name,
+    category: skill.category || 'Technical',
     icon: skill.icon || 'code'
   };
   db.skills.push(newSkill);

@@ -29,8 +29,8 @@
         <nav>
           <ul class="nav-links">
             <li><a href="#home" class="nav-link active">Home</a></li>
-            <li><a href="#journey" class="nav-link">Journey</a></li>
-            <li><a href="#skills" class="nav-link">Skills</a></li>
+            <li><a href="#journey" class="nav-link">Academic Journey</a></li>
+            <li><a href="#skills" class="nav-link">Skillset</a></li>
             <li><a href="#projects" class="nav-link">Projects</a></li>
             <li><a href="#certificates" class="nav-link">Certificates</a></li>
             <li><a href="#coding-profiles" class="nav-link">Coding Profiles</a></li>
@@ -58,8 +58,8 @@
       </div>
       <ul class="drawer-links">
         <li><a href="#home" class="nav-link">Home</a></li>
-        <li><a href="#journey" class="nav-link">Journey</a></li>
-        <li><a href="#skills" class="nav-link">Skills</a></li>
+        <li><a href="#journey" class="nav-link">Academic Journey</a></li>
+        <li><a href="#skills" class="nav-link">Skillset</a></li>
         <li><a href="#projects" class="nav-link">Projects</a></li>
         <li><a href="#certificates" class="nav-link">Certificates</a></li>
         <li><a href="#coding-profiles" class="nav-link">Coding Profiles</a></li>
@@ -86,7 +86,7 @@
               <span>Available for Principal & Architect Opportunities</span>
             </div>
             <h1 class="hero-title">
-              Hi, I'm <span class="gradient-text" id="hero-name">Harkeerat Singh</span>
+              <span class="gradient-text" id="hero-name">Harkeerat Singh</span>
             </h1>
             <p class="hero-role" id="hero-role">Senior Full-Stack & AI Systems Architect</p>
             <p class="hero-bio" id="hero-bio">
@@ -156,7 +156,7 @@
         </div>
       </section>
 
-      <!-- Academic & Professional Journey -->
+      <!-- Academic Journey -->
       <section id="journey">
         <div class="container">
           <div class="section-header">
@@ -164,7 +164,7 @@
               <svg width="14" height="14"><use href="/icons.svg#icon-briefcase"></use></svg>
               Milestones
             </span>
-            <h2 class="section-title">Academic & Professional Journey</h2>
+            <h2 class="section-title">Academic Journey</h2>
             <p class="section-subtitle">A chronological track record of architectural leadership, scalable engineering, and core academic foundations.</p>
           </div>
 
@@ -175,7 +175,7 @@
         </div>
       </section>
 
-      <!-- Technical Toolkit & Skills -->
+      <!-- Skillset -->
       <section id="skills">
         <div class="container">
           <div class="section-header">
@@ -183,8 +183,15 @@
               <svg width="14" height="14"><use href="/icons.svg#icon-cpu"></use></svg>
               Capabilities
             </span>
-            <h2 class="section-title">Technical Toolkit & Skills</h2>
-            <p class="section-subtitle">Core technologies, distributed systems, runtimes, and engineering tools leveraged across production systems.</p>
+            <h2 class="section-title">Skillset</h2>
+            <p class="section-subtitle">Core technical proficiencies and non-technical leadership disciplines across production engineering systems.</p>
+          </div>
+
+          <!-- Category Filter Tabs -->
+          <div class="filter-tabs" id="skill-filter-tabs">
+            <button class="filter-tab-btn active" data-category="All">All</button>
+            <button class="filter-tab-btn" data-category="Technical">Technical</button>
+            <button class="filter-tab-btn" data-category="Non Technical">Non Technical</button>
           </div>
 
           <div class="skills-grid" id="skills-grid">
@@ -491,7 +498,7 @@
         <div class="admin-sidebar">
           <button class="admin-tab-btn active" data-pane="pane-skills">
             <svg width="16" height="16"><use href="/icons.svg#icon-cpu"></use></svg>
-            <span>Pane A: Tech Stacks</span>
+            <span>Pane A: Skillset</span>
           </button>
           <button class="admin-tab-btn" data-pane="pane-projects">
             <svg width="16" height="16"><use href="/icons.svg#icon-code"></use></svg>
@@ -525,13 +532,20 @@
 
         <!-- Tab Panes Content -->
         <div class="admin-content">
-          <!-- Pane A: Tech Stacks -->
+          <!-- Pane A: Skillset -->
           <div id="pane-skills" class="admin-pane active">
-            <h4 style="margin-bottom: 1rem;">Manage Technical Skills</h4>
-            <form id="admin-add-skill-form" style="display: flex; gap: 0.75rem; align-items: end; margin-bottom: 1.5rem;">
-              <div class="form-group" style="flex: 1;">
-                <label>Skill / Technology Name</label>
-                <input type="text" id="skill-input-name" class="form-input" placeholder="e.g. Rust Systems, Apache Kafka, ClickHouse" required />
+            <h4 style="margin-bottom: 1rem;">Manage Skillset (Technical & Non Technical)</h4>
+            <form id="admin-add-skill-form" style="display: flex; gap: 0.75rem; align-items: end; margin-bottom: 1.5rem; flex-wrap: wrap;">
+              <div class="form-group" style="flex: 2; min-width: 220px;">
+                <label>Skill / Capability Name</label>
+                <input type="text" id="skill-input-name" class="form-input" placeholder="e.g. Distributed Consensus, System Architecture, Team Mentorship" required />
+              </div>
+              <div class="form-group" style="flex: 1; min-width: 150px;">
+                <label>Category</label>
+                <select id="skill-input-category" class="form-input">
+                  <option value="Technical">Technical</option>
+                  <option value="Non Technical">Non Technical</option>
+                </select>
               </div>
               <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <button type="submit" id="skill-submit-btn" class="btn btn-primary btn-sm">Add Skill</button>

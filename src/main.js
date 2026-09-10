@@ -55,6 +55,7 @@ import {
    ========================================================================== */
 
 let activeProjectFilter = 'All';
+let activeSkillCategory = 'All';
 let chatHistory = [];
 let lastMessageTimestamp = 0;
 let carouselIndex = 0;
@@ -482,35 +483,70 @@ function renderJourney(journeyItems) {
 }
 
 /* ==========================================================================
-   Technical Toolkit & Skills (Clean Badges without Categories/Meters)
+   Skillset (Technical & Non Technical Categories)
    ========================================================================== */
 
 function getSkillIcon(name) {
   const n = (name || '').toLowerCase();
-  if (n.includes('sql') || n.includes('redis') || n.includes('data') || n.includes('mongo') || n.includes('vector')) return 'database';
+  if (n.includes('sql') || n.includes('redis') || n.includes('data') || n.includes('mongo') || n.includes('vector') || n.includes('postgres')) return 'database';
   if (n.includes('cloud') || n.includes('aws') || n.includes('gcp') || n.includes('azure') || n.includes('docker') || n.includes('k8s') || n.includes('kubernetes')) return 'cloud';
   if (n.includes('ai') || n.includes('ml') || n.includes('llm') || n.includes('model') || n.includes('prompt') || n.includes('groq')) return 'sparkles';
   if (n.includes('security') || n.includes('auth') || n.includes('ci/cd') || n.includes('terraform')) return 'shield';
-  if (n.includes('arch') || n.includes('micro') || n.includes('system') || n.includes('grpc') || n.includes('kafka') || n.includes('stream') || n.includes('vanilla')) return 'layers';
+  if (n.includes('arch') || n.includes('micro') || n.includes('system') || n.includes('grpc') || n.includes('kafka') || n.includes('stream') || n.includes('vanilla') || n.includes('rfc')) return 'layers';
   if (n.includes('python') || n.includes('node') || n.includes('bash') || n.includes('shell') || n.includes('cli') || n.includes('terminal')) return 'terminal';
   if (n.includes('go') || n.includes('rust') || n.includes('c++') || n.includes('cpu') || n.includes('hardware')) return 'cpu';
+  if (n.includes('mentor') || n.includes('leader') || n.includes('lead') || n.includes('award')) return 'award';
+  if (n.includes('agile') || n.includes('scrum') || n.includes('sprint') || n.includes('delivery') || n.includes('activity')) return 'activity';
+  if (n.includes('product') || n.includes('strategy') || n.includes('target') || n.includes('goal')) return 'target';
+  if (n.includes('write') || n.includes('writing') || n.includes('doc') || n.includes('spec')) return 'file-text';
+  if (n.includes('stakeholder') || n.includes('comm') || n.includes('align') || n.includes('business') || n.includes('manage')) return 'briefcase';
   return 'code';
 }
 
 function renderSkills(skills) {
   const grid = document.getElementById('skills-grid');
+  const tabs = document.getElementById('skill-filter-tabs');
   if (!grid) return;
 
-  const list = skills || [];
+  const allSkills = skills || getSkills() || [];
+
+  if (tabs) {
+    tabs.querySelectorAll('.filter-tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        tabs.querySelectorAll('.filter-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeSkillCategory = btn.dataset.category;
+        filterAndRenderSkills(allSkills);
+      };
+    });
+  }
+
+  filterAndRenderSkills(allSkills);
+}
+
+function filterAndRenderSkills(allSkills) {
+  const grid = document.getElementById('skills-grid');
+  if (!grid) return;
+
+  const filtered = activeSkillCategory === 'All'
+    ? allSkills
+    : allSkills.filter(s => (s.category || 'Technical') === activeSkillCategory);
+
   grid.innerHTML = '';
 
-  list.forEach(skill => {
+  filtered.forEach(skill => {
     const card = document.createElement('div');
     card.className = 'bento-card skill-card';
     const icon = skill.icon || getSkillIcon(skill.name);
+    const category = skill.category || 'Technical';
+    const isNonTech = category === 'Non Technical';
+
     card.innerHTML = `
-      <div class="skill-icon-wrap">
-        <svg width="20" height="20"><use href="/icons.svg#icon-${icon}"></use></svg>
+      <div class="skill-card-top">
+        <div class="skill-icon-wrap">
+          <svg width="20" height="20"><use href="/icons.svg#icon-${icon}"></use></svg>
+        </div>
+        <span class="skill-category-badge ${isNonTech ? 'badge-non-tech' : 'badge-tech'}">${category}</span>
       </div>
       <span class="skill-card-name">${skill.name}</span>
     `;
@@ -1028,6 +1064,8 @@ function initAdminPaneA() {
   function resetSkillForm() {
     editingSkillId = null;
     form.reset();
+    const catSelect = document.getElementById('skill-input-category');
+    if (catSelect) catSelect.value = 'Technical';
     if (submitBtn) submitBtn.textContent = 'Add Skill';
     if (cancelBtn) cancelBtn.style.display = 'none';
   }
@@ -1041,15 +1079,16 @@ function initAdminPaneA() {
   form.onsubmit = (e) => {
     e.preventDefault();
     const name = document.getElementById('skill-input-name').value.trim();
+    const category = document.getElementById('skill-input-category')?.value || 'Technical';
     if (!name) return;
 
     if (editingSkillId) {
       const existing = (getSkills() || []).find(s => s.id === editingSkillId);
       const icon = existing?.icon || getSkillIcon(name);
-      updateSkill(editingSkillId, { name, icon });
+      updateSkill(editingSkillId, { name, category, icon });
       showToast('Skill updated.', 'success');
     } else {
-      addSkill({ name, icon: getSkillIcon(name) });
+      addSkill({ name, category, icon: getSkillIcon(name) });
       showToast('Skill added.', 'success');
     }
 
@@ -1068,11 +1107,13 @@ function renderAdminSkills() {
 
   skills.forEach(s => {
     const item = document.createElement('div');
+    const isNonTech = s.category === 'Non Technical';
     item.style = 'display: flex; justify-content: space-between; align-items: center; background: var(--surface-0); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);';
     item.innerHTML = `
       <div style="display: flex; align-items: center; gap: 0.6rem;">
         <svg width="16" height="16" style="color: var(--accent-mint);"><use href="/icons.svg#icon-${s.icon || getSkillIcon(s.name)}"></use></svg>
         <strong>${s.name}</strong>
+        <span class="skill-category-badge ${isNonTech ? 'badge-non-tech' : 'badge-tech'}" style="font-size: 0.65rem; padding: 0.1rem 0.45rem;">${s.category || 'Technical'}</span>
       </div>
       <div style="display: flex; gap: 0.4rem; align-items: center;">
         <button class="btn btn-ghost btn-sm edit-skill-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Edit Skill">
@@ -1089,6 +1130,8 @@ function renderAdminSkills() {
     item.querySelector('.edit-skill-btn').onclick = () => {
       editingSkillId = s.id;
       document.getElementById('skill-input-name').value = s.name;
+      const catSelect = document.getElementById('skill-input-category');
+      if (catSelect) catSelect.value = s.category || 'Technical';
 
       const submitBtn = document.getElementById('skill-submit-btn');
       const cancelBtn = document.getElementById('skill-cancel-btn');
@@ -2060,9 +2103,16 @@ function renderAtsPrintView(mode) {
     </div>
 
     <div class="print-section">
-      <div class="print-section-title">Core Technical Stack & Tools</div>
+      <div class="print-section-title">Technical Skillset</div>
       <div class="print-item-body">
-        ${(db.skills || []).map(s => `<strong>${s.name}</strong>`).join(' • ')}
+        ${(db.skills || []).filter(s => (s.category || 'Technical') === 'Technical').map(s => `<strong>${s.name}</strong>`).join(' • ')}
+      </div>
+    </div>
+
+    <div class="print-section">
+      <div class="print-section-title">Non-Technical & Leadership Skillset</div>
+      <div class="print-item-body">
+        ${(db.skills || []).filter(s => s.category === 'Non Technical').map(s => `<strong>${s.name}</strong>`).join(' • ')}
       </div>
     </div>
 
