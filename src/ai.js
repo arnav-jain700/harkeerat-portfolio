@@ -8,7 +8,7 @@ const GROQ_MODEL = 'llama-3.3-70b-versatile';
 export function buildLivePortfolioContext() {
   const db = loadData();
   const profile = db.profile || {};
-  const skills = (db.skills || []).map(s => `${s.name} (${s.category}, ${s.level}%)`).join(', ');
+  const skills = (db.skills || []).map(s => s.name).join(', ');
   const projects = (db.projects || []).map(p => `- ${p.title} [Category: ${p.category}]: ${p.description}. Tech: ${p.tags.join(', ')} (Demo: ${p.demoUrl}, GitHub: ${p.githubUrl})`).join('\n');
   const journey = (db.journey || []).map(j => `- ${j.role} at ${j.company} (${j.date}) [${j.type}]: ${j.description}`).join('\n');
   const certs = (db.certificates || []).map(c => `- ${c.title} by ${c.issuer} (${c.year})`).join('\n');
@@ -22,7 +22,7 @@ GitHub: ${profile.github}
 LinkedIn: ${profile.linkedin}
 Bio: ${profile.bio}
 
-SKILLS & PROFICIENCIES:
+TECHNICAL TOOLKIT & STACK:
 ${skills}
 
 FEATURED PROJECTS:

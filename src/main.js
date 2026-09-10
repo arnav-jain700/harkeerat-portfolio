@@ -54,7 +54,6 @@ import {
    State & Global Singletons
    ========================================================================== */
 
-let activeCategoryFilter = 'All';
 let activeProjectFilter = 'All';
 let chatHistory = [];
 let lastMessageTimestamp = 0;
@@ -485,73 +484,40 @@ function renderJourney(journeyItems) {
 }
 
 /* ==========================================================================
-   Skills Toolkit & Animated Meters
+   Technical Toolkit & Skills (Clean Badges without Categories/Meters)
    ========================================================================== */
+
+function getSkillIcon(name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('sql') || n.includes('redis') || n.includes('data') || n.includes('mongo') || n.includes('vector')) return 'database';
+  if (n.includes('cloud') || n.includes('aws') || n.includes('gcp') || n.includes('azure') || n.includes('docker') || n.includes('k8s') || n.includes('kubernetes')) return 'cloud';
+  if (n.includes('ai') || n.includes('ml') || n.includes('llm') || n.includes('model') || n.includes('prompt') || n.includes('groq')) return 'sparkles';
+  if (n.includes('security') || n.includes('auth') || n.includes('ci/cd') || n.includes('terraform')) return 'shield';
+  if (n.includes('arch') || n.includes('micro') || n.includes('system') || n.includes('grpc') || n.includes('kafka') || n.includes('stream') || n.includes('vanilla')) return 'layers';
+  if (n.includes('python') || n.includes('node') || n.includes('bash') || n.includes('shell') || n.includes('cli') || n.includes('terminal')) return 'terminal';
+  if (n.includes('go') || n.includes('rust') || n.includes('c++') || n.includes('cpu') || n.includes('hardware')) return 'cpu';
+  return 'code';
+}
 
 function renderSkills(skills) {
   const grid = document.getElementById('skills-grid');
-  const tabs = document.getElementById('skill-filter-tabs');
-  if (!grid || !tabs) return;
-
-  // Filter tabs click handling
-  tabs.querySelectorAll('.filter-tab-btn').forEach(btn => {
-    btn.onclick = () => {
-      tabs.querySelectorAll('.filter-tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeCategoryFilter = btn.dataset.category;
-      filterAndRenderSkills(skills);
-    };
-  });
-
-  filterAndRenderSkills(skills);
-}
-
-function filterAndRenderSkills(allSkills) {
-  const grid = document.getElementById('skills-grid');
   if (!grid) return;
 
-  const filtered = activeCategoryFilter === 'All'
-    ? allSkills
-    : allSkills.filter(s => s.category.toLowerCase() === activeCategoryFilter.toLowerCase());
-
+  const list = skills || [];
   grid.innerHTML = '';
 
-  filtered.forEach(skill => {
+  list.forEach(skill => {
     const card = document.createElement('div');
     card.className = 'bento-card skill-card';
+    const icon = skill.icon || getSkillIcon(skill.name);
     card.innerHTML = `
-      <div class="skill-card-top">
-        <div class="skill-name-wrap">
-          <svg width="18" height="18" style="color: var(--accent-mint);"><use href="/icons.svg#icon-${skill.icon || 'code'}"></use></svg>
-          <span>${skill.name}</span>
-        </div>
-        <span class="skill-level-number">${skill.level}%</span>
+      <div class="skill-icon-wrap">
+        <svg width="20" height="20"><use href="/icons.svg#icon-${icon}"></use></svg>
       </div>
-      <div class="skill-meter-bg">
-        <div class="skill-meter-fill" data-level="${skill.level}"></div>
-      </div>
+      <span class="skill-card-name">${skill.name}</span>
     `;
     grid.appendChild(card);
   });
-
-  // Animate meters on scroll into view
-  animateSkillMeters();
-}
-
-function animateSkillMeters() {
-  const meters = document.querySelectorAll('.skill-meter-fill');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const fill = entry.target;
-        const level = fill.dataset.level || '80';
-        fill.style.width = `${level}%`;
-        observer.unobserve(fill);
-      }
-    });
-  }, { threshold: 0.2 });
-
-  meters.forEach(m => observer.observe(m));
 }
 
 /* ==========================================================================
@@ -1044,14 +1010,15 @@ function initAdminPaneA() {
   form.onsubmit = (e) => {
     e.preventDefault();
     const name = document.getElementById('skill-input-name').value.trim();
-    const category = document.getElementById('skill-input-category').value;
-    const level = Number(document.getElementById('skill-input-level').value);
+    if (!name) return;
 
     if (editingSkillId) {
-      updateSkill(editingSkillId, { name, category, level, icon: 'code' });
+      const existing = (getSkills() || []).find(s => s.id === editingSkillId);
+      const icon = existing?.icon || getSkillIcon(name);
+      updateSkill(editingSkillId, { name, icon });
       showToast('Skill updated.', 'success');
     } else {
-      addSkill({ name, category, level, icon: 'code' });
+      addSkill({ name, icon: getSkillIcon(name) });
       showToast('Skill added.', 'success');
     }
 
@@ -1072,8 +1039,9 @@ function renderAdminSkills() {
     const item = document.createElement('div');
     item.style = 'display: flex; justify-content: space-between; align-items: center; background: var(--surface-0); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);';
     item.innerHTML = `
-      <div>
-        <strong>${s.name}</strong> (${s.category}) — <span style="color: var(--accent-mint); font-family: var(--font-mono);">${s.level}%</span>
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <svg width="16" height="16" style="color: var(--accent-mint);"><use href="/icons.svg#icon-${s.icon || getSkillIcon(s.name)}"></use></svg>
+        <strong>${s.name}</strong>
       </div>
       <div style="display: flex; gap: 0.4rem; align-items: center;">
         <button class="btn btn-ghost btn-sm edit-skill-btn" style="color: var(--accent-mint); padding: 0.25rem 0.6rem;" title="Edit Skill">
@@ -1090,8 +1058,6 @@ function renderAdminSkills() {
     item.querySelector('.edit-skill-btn').onclick = () => {
       editingSkillId = s.id;
       document.getElementById('skill-input-name').value = s.name;
-      document.getElementById('skill-input-category').value = s.category;
-      document.getElementById('skill-input-level').value = s.level;
 
       const submitBtn = document.getElementById('skill-submit-btn');
       const cancelBtn = document.getElementById('skill-cancel-btn');
@@ -2027,9 +1993,9 @@ function renderAtsPrintView(mode) {
     </div>
 
     <div class="print-section">
-      <div class="print-section-title">Core Technical Proficiencies</div>
+      <div class="print-section-title">Core Technical Stack & Tools</div>
       <div class="print-item-body">
-        ${(db.skills || []).map(s => `<strong>${s.name}</strong> (${s.category})`).join(' • ')}
+        ${(db.skills || []).map(s => `<strong>${s.name}</strong>`).join(' • ')}
       </div>
     </div>
 

@@ -59,30 +59,26 @@ export const DEFAULT_DATABASE = {
     }
   ],
   skills: [
-    { id: 's-1', name: 'TypeScript / JavaScript (ESNext)', category: 'Frontend', level: 96, icon: 'code' },
-    { id: 's-2', name: 'Framework-less Vanilla Architecture & WebGL', category: 'Frontend', level: 92, icon: 'layers' },
-    { id: 's-3', name: 'React, Next.js & Micro-Frontends', category: 'Frontend', level: 94, icon: 'code' },
-    { id: 's-4', name: 'Modern CSS, CSS Grid & Performance Profiling', category: 'Frontend', level: 90, icon: 'sparkles' },
-    
-    { id: 's-5', name: 'Node.js, Express & Fastify', category: 'Backend', level: 95, icon: 'terminal' },
-    { id: 's-6', name: 'Golang Distributed Microservices', category: 'Backend', level: 88, icon: 'cpu' },
-    { id: 's-7', name: 'Python (FastAPI, AsyncIO, PyTorch)', category: 'Backend', level: 91, icon: 'terminal' },
-    { id: 's-8', name: 'gRPC, WebSockets & Event-Driven APIs', category: 'Backend', level: 93, icon: 'layers' },
-
-    { id: 's-9', name: 'PostgreSQL & pgvector Optimization', category: 'Databases', level: 94, icon: 'database' },
-    { id: 's-10', name: 'Redis Cache & Pub/Sub Streams', category: 'Databases', level: 92, icon: 'database' },
-    { id: 's-11', name: 'Vector DBs (Qdrant, Milvus, Supabase)', category: 'Databases', level: 89, icon: 'database' },
-    { id: 's-12', name: 'Apache Kafka & Distributed Message Queues', category: 'Databases', level: 86, icon: 'layers' },
-
-    { id: 's-13', name: 'Docker, Podman & Container Sandboxing', category: 'DevOps & Cloud', level: 95, icon: 'cloud' },
-    { id: 's-14', name: 'Kubernetes (CKA), Helm & Service Mesh', category: 'DevOps & Cloud', level: 89, icon: 'cloud' },
-    { id: 's-15', name: 'AWS Cloud Infrastructure (ECS, Lambda, S3, RDS)', category: 'DevOps & Cloud', level: 92, icon: 'cloud' },
-    { id: 's-16', name: 'Terraform, CI/CD GitHub Actions & Observability', category: 'DevOps & Cloud', level: 88, icon: 'shield' },
-
-    { id: 's-17', name: 'Groq API, LLaMA 3.3 & vLLM High-Speed Serving', category: 'AI & ML', level: 95, icon: 'sparkles' },
-    { id: 's-18', name: 'RAG Systems, Semantic Search & Chunking', category: 'AI & ML', level: 93, icon: 'target' },
-    { id: 's-19', name: 'LLM Agentic Tool-Use & Prompt Engineering', category: 'AI & ML', level: 94, icon: 'bot' },
-    { id: 's-20', name: 'Model Evaluation, Fine-Tuning & Quantization', category: 'AI & ML', level: 85, icon: 'cpu' }
+    { id: 's-1', name: 'TypeScript / JavaScript (ESNext)', icon: 'code' },
+    { id: 's-2', name: 'Framework-less Vanilla Architecture & WebGL', icon: 'layers' },
+    { id: 's-3', name: 'React, Next.js & Micro-Frontends', icon: 'code' },
+    { id: 's-4', name: 'Modern CSS & Performance Profiling', icon: 'sparkles' },
+    { id: 's-5', name: 'Node.js, Express & Fastify', icon: 'terminal' },
+    { id: 's-6', name: 'Golang Distributed Microservices', icon: 'cpu' },
+    { id: 's-7', name: 'Python (FastAPI, AsyncIO, PyTorch)', icon: 'terminal' },
+    { id: 's-8', name: 'gRPC, WebSockets & Event-Driven APIs', icon: 'layers' },
+    { id: 's-9', name: 'PostgreSQL & pgvector Optimization', icon: 'database' },
+    { id: 's-10', name: 'Redis Cache & Pub/Sub Streams', icon: 'database' },
+    { id: 's-11', name: 'Vector DBs (Qdrant, Milvus, Supabase)', icon: 'database' },
+    { id: 's-12', name: 'Apache Kafka & Distributed Message Queues', icon: 'layers' },
+    { id: 's-13', name: 'Docker, Podman & Container Sandboxing', icon: 'cloud' },
+    { id: 's-14', name: 'Kubernetes (CKA), Helm & Service Mesh', icon: 'cloud' },
+    { id: 's-15', name: 'AWS Cloud Infrastructure (ECS, Lambda, S3, RDS)', icon: 'cloud' },
+    { id: 's-16', name: 'Terraform, CI/CD GitHub Actions & Observability', icon: 'shield' },
+    { id: 's-17', name: 'Groq API, LLaMA 3.3 & vLLM High-Speed Serving', icon: 'sparkles' },
+    { id: 's-18', name: 'RAG Systems, Semantic Search & Chunking', icon: 'target' },
+    { id: 's-19', name: 'LLM Agentic Tool-Use & Prompt Engineering', icon: 'bot' },
+    { id: 's-20', name: 'Model Evaluation, Fine-Tuning & Quantization', icon: 'cpu' }
   ],
   projects: [
     {
@@ -449,8 +445,6 @@ export function addSkill(skill) {
   const newSkill = {
     id: 's-' + Date.now(),
     name: skill.name,
-    category: skill.category || 'General',
-    level: Number(skill.level) || 80,
     icon: skill.icon || 'code'
   };
   db.skills.push(newSkill);
@@ -471,8 +465,7 @@ export function updateSkill(id, updatedFields) {
   if (index === -1) return null;
   db.skills[index] = {
     ...db.skills[index],
-    ...updatedFields,
-    level: Number(updatedFields.level) || db.skills[index].level
+    ...updatedFields
   };
   saveData(db);
   return db.skills[index];

@@ -180,16 +180,7 @@
               Capabilities
             </span>
             <h2 class="section-title">Technical Toolkit & Skills</h2>
-            <p class="section-subtitle">Proficiency across modern systems engineering, distributed clouds, high-speed LLM architectures, and frontend standards.</p>
-          </div>
-
-          <div class="filter-tabs" id="skill-filter-tabs">
-            <button class="filter-tab-btn active" data-category="All">All Disciplines</button>
-            <button class="filter-tab-btn" data-category="Frontend">Frontend</button>
-            <button class="filter-tab-btn" data-category="Backend">Backend</button>
-            <button class="filter-tab-btn" data-category="Databases">Databases</button>
-            <button class="filter-tab-btn" data-category="DevOps & Cloud">DevOps & Cloud</button>
-            <button class="filter-tab-btn" data-category="AI & ML">AI & ML</button>
+            <p class="section-subtitle">Core technologies, distributed systems, runtimes, and engineering tools leveraged across production systems.</p>
           </div>
 
           <div class="skills-grid" id="skills-grid">
@@ -527,24 +518,10 @@
           <!-- Pane A: Tech Stacks -->
           <div id="pane-skills" class="admin-pane active">
             <h4 style="margin-bottom: 1rem;">Manage Technical Skills</h4>
-            <form id="admin-add-skill-form" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 1.5rem;">
-              <div class="form-group">
-                <label>Skill Name</label>
-                <input type="text" id="skill-input-name" class="form-input" placeholder="e.g. Rust Systems" required />
-              </div>
-              <div class="form-group">
-                <label>Category</label>
-                <select id="skill-input-category" class="form-input">
-                  <option value="Frontend">Frontend</option>
-                  <option value="Backend">Backend</option>
-                  <option value="Databases">Databases</option>
-                  <option value="DevOps & Cloud">DevOps & Cloud</option>
-                  <option value="AI & ML">AI & ML</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Proficiency (%)</label>
-                <input type="number" id="skill-input-level" class="form-input" min="1" max="100" value="88" required />
+            <form id="admin-add-skill-form" style="display: flex; gap: 0.75rem; align-items: end; margin-bottom: 1.5rem;">
+              <div class="form-group" style="flex: 1;">
+                <label>Skill / Technology Name</label>
+                <input type="text" id="skill-input-name" class="form-input" placeholder="e.g. Rust Systems, Apache Kafka, ClickHouse" required />
               </div>
               <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <button type="submit" id="skill-submit-btn" class="btn btn-primary btn-sm">Add Skill</button>
