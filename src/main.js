@@ -776,9 +776,13 @@ function renderCodingPlatforms(platforms) {
     // Determine icon
     const iconId = p.icon ? `icon-${p.icon}` : 'icon-code';
 
-    // RATING: Only LeetCode's rating should be visible
+    const isCodeforces = pName.includes('codeforces');
+    const isCodeChef = pName.includes('codechef');
+    const hasContestRating = isLeetCode || isCodeforces || isCodeChef;
+
+    // RATING: LeetCode, Codeforces, and CodeChef contest rating
     let ratingBlock = '';
-    if (isLeetCode) {
+    if (hasContestRating && p.rating) {
       ratingBlock = `
         <div class="platform-rating-section">
           <div class="rating-primary">
@@ -786,9 +790,11 @@ function renderCodingPlatforms(platforms) {
             <div class="rating-value">${p.rating}</div>
             ${p.maxRating ? `<div class="rating-max-label">Peak: ${p.maxRating}</div>` : ''}
           </div>
-          <div class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
-            ${p.badge}
-          </div>
+          ${p.badge ? `
+            <div class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
+              ${p.badge}
+            </div>
+          ` : ''}
         </div>
       `;
     } else if (p.badge) {
