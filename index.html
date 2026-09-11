@@ -247,7 +247,11 @@
               <h2 class="section-title">Coding Profiles & Problem Solving</h2>
               <p class="section-subtitle">Verified contest rankings, algorithmic mastery, and live statistics across competitive programming platforms.</p>
             </div>
-            <div class="coding-header-actions">
+            <div class="coding-header-actions" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+              <button id="add-coding-profile-direct-btn" class="btn btn-ghost btn-sm" title="Add Your Own Coding Profile" style="color: var(--accent-mint); border: 1px solid rgba(0, 245, 160, 0.3);">
+                <svg width="14" height="14"><use href="/icons.svg#icon-plus"></use></svg>
+                <span>+ Add Profile</span>
+              </button>
               <button id="refresh-coding-stats-btn" class="btn btn-secondary btn-sm" title="Sync live stats from competitive programming APIs">
                 <svg width="14" height="14" class="sync-icon"><use href="/icons.svg#icon-refresh"></use></svg>
                 <span class="sync-btn-text">Sync Live Stats</span>
@@ -841,7 +845,9 @@
                     <option value="Codolio">Codolio</option>
                     <option value="HackerRank">HackerRank</option>
                     <option value="AtCoder">AtCoder</option>
+                    <option value="Custom">Custom / Other Platform...</option>
                   </select>
+                  <input type="text" id="platform-input-custom-name" class="form-input" placeholder="Type custom platform name..." style="display: none; margin-top: 0.5rem;" />
                 </div>
                 <div class="form-group">
                   <label>Profile Handle / Username</label>
@@ -853,59 +859,102 @@
                 </div>
               </div>
 
-              <div style="display: flex; justify-content: flex-end;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="font-size: 0.82rem; color: var(--text-muted);">
+                  Auto-fetch queries live platform telemetry to populate metrics and configure the checklist below.
+                </div>
                 <button type="button" id="admin-fetch-single-cp-btn" class="btn btn-ghost btn-sm" style="color: var(--accent-mint); border: 1px solid rgba(0, 245, 160, 0.3);">
                   <svg width="14" height="14"><use href="/icons.svg#icon-activity"></use></svg>
                   <span>⚡ Auto-Fetch Live Stats for Handle</span>
                 </button>
               </div>
 
+              <!-- Parameter Checklist for Card Display -->
+              <div class="platform-checklist-container" style="background: var(--surface-1); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.4rem;">
+                  <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;">
+                    <svg width="15" height="15" style="color: var(--accent-mint);"><use href="/icons.svg#icon-check"></use></svg>
+                    <span>Card Parameters Checklist</span>
+                  </div>
+                  <span style="font-size: 0.76rem; color: var(--accent-mint); font-family: var(--font-mono);">Controls what appears on the public card</span>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                  Select which parameters to display on this platform's showcase card:
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.6rem;">
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: var(--radius-xs); background: var(--surface-0); border: 1px solid var(--border-subtle);">
+                    <input type="checkbox" id="platform-check-rating" checked />
+                    <span><strong>Contest Rating</strong> & Peak</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: var(--radius-xs); background: var(--surface-0); border: 1px solid var(--border-subtle);">
+                    <input type="checkbox" id="platform-check-solved" checked />
+                    <span><strong>Problems Solved</strong> Total</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: var(--radius-xs); background: var(--surface-0); border: 1px solid var(--border-subtle);">
+                    <input type="checkbox" id="platform-check-breakdown" checked />
+                    <span><strong>Difficulty Bar</strong> (E/M/H)</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: var(--radius-xs); background: var(--surface-0); border: 1px solid var(--border-subtle);">
+                    <input type="checkbox" id="platform-check-contests" />
+                    <span><strong>Contests Attended</strong></span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: var(--radius-xs); background: var(--surface-0); border: 1px solid var(--border-subtle);">
+                    <input type="checkbox" id="platform-check-streak" checked />
+                    <span><strong>Active Streak</strong> (Days)</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: var(--radius-xs); background: var(--surface-0); border: 1px solid var(--border-subtle);">
+                    <input type="checkbox" id="platform-check-rank" checked />
+                    <span><strong>Rank / Affiliation</strong></span>
+                  </label>
+                </div>
+              </div>
+
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
                 <div class="form-group">
                   <label>Current Rating</label>
-                  <input type="number" id="platform-input-rating" class="form-input" placeholder="2185" required />
+                  <input type="number" id="platform-input-rating" class="form-input" placeholder="e.g. 1636" />
                 </div>
                 <div class="form-group">
-                  <label>Max Rating</label>
-                  <input type="number" id="platform-input-max-rating" class="form-input" placeholder="2240" />
+                  <label>Max / Peak Rating</label>
+                  <input type="number" id="platform-input-max-rating" class="form-input" placeholder="e.g. 1641" />
                 </div>
                 <div class="form-group">
                   <label>Rank / Tier Badge</label>
-                  <input type="text" id="platform-input-badge" class="form-input" placeholder="e.g. Guardian / Candidate Master" required />
+                  <input type="text" id="platform-input-badge" class="form-input" placeholder="e.g. Top 19.9% / Newbie" />
                 </div>
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;">
                 <div class="form-group">
                   <label>Total Solved</label>
-                  <input type="number" id="platform-input-total-solved" class="form-input" placeholder="1150" required />
+                  <input type="number" id="platform-input-total-solved" class="form-input" placeholder="e.g. 574" />
                 </div>
                 <div class="form-group">
                   <label>Easy Count</label>
-                  <input type="number" id="platform-input-easy" class="form-input" placeholder="310" />
+                  <input type="number" id="platform-input-easy" class="form-input" placeholder="173" />
                 </div>
                 <div class="form-group">
                   <label>Medium Count</label>
-                  <input type="number" id="platform-input-medium" class="form-input" placeholder="640" />
+                  <input type="number" id="platform-input-medium" class="form-input" placeholder="383" />
                 </div>
                 <div class="form-group">
                   <label>Hard Count</label>
-                  <input type="number" id="platform-input-hard" class="form-input" placeholder="200" />
+                  <input type="number" id="platform-input-hard" class="form-input" placeholder="18" />
                 </div>
               </div>
 
               <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 0.75rem;">
                 <div class="form-group">
-                  <label>Global Rank / Percentile</label>
-                  <input type="text" id="platform-input-ranking" class="form-input" placeholder="Top 1.1% (Global Rank #1,420)" />
+                  <label>Global Rank / Affiliation</label>
+                  <input type="text" id="platform-input-ranking" class="form-input" placeholder="e.g. Global Rank #172,419" />
                 </div>
                 <div class="form-group">
                   <label>Contests Attended</label>
-                  <input type="number" id="platform-input-contests" class="form-input" placeholder="68" />
+                  <input type="number" id="platform-input-contests" class="form-input" placeholder="17" />
                 </div>
                 <div class="form-group">
                   <label>Active Streak (Days)</label>
-                  <input type="number" id="platform-input-streak" class="form-input" placeholder="365" />
+                  <input type="number" id="platform-input-streak" class="form-input" placeholder="100" />
                 </div>
               </div>
 

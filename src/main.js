@@ -721,6 +721,15 @@ function renderCodingPlatforms(platforms) {
     `;
   }
 
+  // Wire direct add profile button in the section header
+  const addProfileBtn = document.getElementById('add-coding-profile-direct-btn');
+  if (addProfileBtn && !addProfileBtn.dataset.bound) {
+    addProfileBtn.dataset.bound = 'true';
+    addProfileBtn.onclick = () => {
+      openAdminAuthOrDashboard('pane-coding-platforms');
+    };
+  }
+
   // Wire sync button in the section header
   const refreshBtn = document.getElementById('refresh-coding-stats-btn');
   if (refreshBtn && !refreshBtn.dataset.bound) {
@@ -763,6 +772,17 @@ function renderCodingPlatforms(platforms) {
     const pName = (p.platform || '').toLowerCase();
     const isCodolio = pName.includes('codolio');
     const isLeetCode = pName.includes('leetcode');
+    const isCodeforces = pName.includes('codeforces');
+    const isCodeChef = pName.includes('codechef');
+    const isGeeksforGeeks = pName.includes('geek') || pName.includes('gfg');
+
+    // Checklist resolution with defaults
+    const showRating = p.showRating !== undefined ? Boolean(p.showRating) : (isLeetCode || isCodeforces || isCodeChef);
+    const showSolved = p.showSolved !== undefined ? Boolean(p.showSolved) : true;
+    const showBreakdown = p.showBreakdown !== undefined ? Boolean(p.showBreakdown) : (isCodolio || isLeetCode || isGeeksforGeeks);
+    const showContests = p.showContests !== undefined ? Boolean(p.showContests) : isCodolio;
+    const showStreak = p.showStreak !== undefined ? Boolean(p.showStreak) : true;
+    const showRank = p.showRank !== undefined ? Boolean(p.showRank) : Boolean(p.ranking);
 
     const total = Number(p.totalSolved) || 1;
     const easy = Number(p.easySolved) || 0;
@@ -774,41 +794,56 @@ function renderCodingPlatforms(platforms) {
     const hardPct = Math.max(0, 100 - easyPct - medPct);
 
     // Determine icon
-    const iconId = p.icon ? `icon-${p.icon}` : 'icon-code';
+    let iconId = 'icon-code';
+    if (p.icon) {
+      iconId = `icon-${p.icon}`;
+    } else if (isLeetCode) {
+      iconId = 'icon-leetcode';
+    } else if (isCodeforces) {
+      iconId = 'icon-codeforces';
+    } else if (isCodeChef) {
+      iconId = 'icon-codechef';
+    } else if (isGeeksforGeeks) {
+      iconId = 'icon-geeksforgeeks';
+    } else if (isCodolio) {
+      iconId = 'icon-codolio';
+    } else if (pName.includes('hackerrank')) {
+      iconId = 'icon-terminal';
+    } else if (pName.includes('atcoder')) {
+      iconId = 'icon-cpu';
+    }
 
-    const isCodeforces = pName.includes('codeforces');
-    const isCodeChef = pName.includes('codechef');
-    const hasContestRating = isLeetCode || isCodeforces || isCodeChef;
-
-    // RATING: LeetCode, Codeforces, and CodeChef contest rating
+    // RATING: Check if showRating is enabled
     let ratingBlock = '';
-    if (hasContestRating && p.rating) {
-      ratingBlock = `
-        <div class="platform-rating-section">
-          <div class="rating-primary">
-            <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-mono);">Contest Rating</span>
-            <div class="rating-value">${p.rating}</div>
-            ${p.maxRating ? `<div class="rating-max-label">Peak: ${p.maxRating}</div>` : ''}
-          </div>
-          ${p.badge ? `
-            <div class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
-              ${p.badge}
+    if (showRating && (p.rating || p.badge)) {
+      if (p.rating) {
+        ratingBlock = `
+          <div class="platform-rating-section">
+            <div class="rating-primary">
+              <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-mono);">Contest Rating</span>
+              <div class="rating-value">${p.rating}</div>
+              ${p.maxRating ? `<div class="rating-max-label">Peak: ${p.maxRating}</div>` : ''}
             </div>
-          ` : ''}
-        </div>
-      `;
-    } else if (p.badge) {
-      ratingBlock = `
-        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-          <span class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
-            ${p.badge}
-          </span>
-        </div>
-      `;
+            ${p.badge ? `
+              <div class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
+                ${p.badge}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } else if (p.badge) {
+        ratingBlock = `
+          <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span class="platform-badge-pill" style="color: ${p.badgeColor || 'var(--accent-mint)'}; border-color: ${p.badgeColor || 'var(--accent-mint)'}; background: rgba(0, 245, 160, 0.06);">
+              ${p.badge}
+            </span>
+          </div>
+        `;
+      }
     }
 
     // RANKING / TAG
-    const rankingBlock = p.ranking ? `
+    const rankingBlock = (showRank && p.ranking) ? `
       <div class="platform-rank-text">
         <svg width="14" height="14" style="color: var(--accent-mint);"><use href="/icons.svg#icon-target"></use></svg>
         <span>${p.ranking}</span>
@@ -817,58 +852,63 @@ function renderCodingPlatforms(platforms) {
 
     // PROBLEMS SOLVED
     let solvedBlock = '';
-    const isGeeksforGeeks = pName.includes('geek') || pName.includes('gfg');
-    const hasFullBreakdown = isCodolio || isLeetCode || isGeeksforGeeks;
-
-    if (hasFullBreakdown) {
-      solvedBlock = `
-        <div class="solved-breakdown-box">
-          <div class="solved-header-row">
-            <span style="font-size: 0.85rem; color: var(--text-secondary);">Problems Solved</span>
-            <span class="solved-total-count">${p.totalSolved || 0}</span>
-          </div>
-
-          <div class="difficulty-bar-wrap" title="Easy: ${easy} | Medium: ${medium} | Hard: ${hard}">
-            <div class="diff-segment easy" style="width: ${easyPct}%;"></div>
-            <div class="diff-segment medium" style="width: ${medPct}%;"></div>
-            <div class="diff-segment hard" style="width: ${hardPct}%;"></div>
-          </div>
-
-          <div class="difficulty-legend-row">
-            <div class="legend-item">
-              <span class="legend-dot" style="background: var(--accent-emerald);"></span>
-              <span>Easy: ${easy}</span>
+    if (showSolved && p.totalSolved !== undefined && p.totalSolved !== null && p.totalSolved !== '') {
+      if (showBreakdown) {
+        solvedBlock = `
+          <div class="solved-breakdown-box">
+            <div class="solved-header-row">
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">Problems Solved</span>
+              <span class="solved-total-count">${p.totalSolved || 0}</span>
             </div>
-            <div class="legend-item">
-              <span class="legend-dot" style="background: var(--accent-amber);"></span>
-              <span>Med: ${medium}</span>
+
+            <div class="difficulty-bar-wrap" title="Easy: ${easy} | Medium: ${medium} | Hard: ${hard}">
+              <div class="diff-segment easy" style="width: ${easyPct}%;"></div>
+              <div class="diff-segment medium" style="width: ${medPct}%;"></div>
+              <div class="diff-segment hard" style="width: ${hardPct}%;"></div>
             </div>
-            <div class="legend-item">
-              <span class="legend-dot" style="background: var(--accent-rose);"></span>
-              <span>Hard: ${hard}</span>
+
+            <div class="difficulty-legend-row">
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--accent-emerald);"></span>
+                <span>Easy: ${easy}</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--accent-amber);"></span>
+                <span>Med: ${medium}</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--accent-rose);"></span>
+                <span>Hard: ${hard}</span>
+              </div>
             </div>
           </div>
-        </div>
-      `;
-    } else if (p.totalSolved !== undefined && p.totalSolved !== null && p.totalSolved !== '') {
-      // Codeforces, CodeChef: just add problems solved info, not the bar category counts
-      solvedBlock = `
-        <div class="solved-breakdown-box" style="margin-bottom: 1.25rem;">
-          <div class="solved-header-row" style="margin-bottom: 0;">
-            <span style="font-size: 0.85rem; color: var(--text-secondary);">Problems Solved</span>
-            <span class="solved-total-count">${p.totalSolved}</span>
+        `;
+      } else {
+        // Codeforces, CodeChef or user preference: total solved only
+        solvedBlock = `
+          <div class="solved-breakdown-box" style="margin-bottom: 1.25rem;">
+            <div class="solved-header-row" style="margin-bottom: 0;">
+              <span style="font-size: 0.85rem; color: var(--text-secondary);">Problems Solved</span>
+              <span class="solved-total-count">${p.totalSolved}</span>
+            </div>
           </div>
+        `;
+      }
+    }
+
+    // CONTESTS & STREAK
+    let footerMetaBlock = '';
+    const hasContests = showContests && (p.contestsCount !== undefined && p.contestsCount !== null);
+    const hasStreak = showStreak && (p.streakDays !== undefined && p.streakDays !== null);
+
+    if (hasContests || hasStreak) {
+      footerMetaBlock = `
+        <div class="platform-footer-meta">
+          ${hasContests ? `<span>Contests: <strong>${p.contestsCount || 0}</strong></span>` : ''}
+          ${hasStreak ? `<span>${hasContests ? 'Streak: ' : 'Active Streak: '}<strong>${p.streakDays || 0}d</strong></span>` : ''}
         </div>
       `;
     }
-
-    // CONTESTS & STREAK: Only Codolio displays contests count
-    const footerMetaBlock = `
-      <div class="platform-footer-meta">
-        ${isCodolio ? `<span>Contests: <strong>${p.contestsCount || 0}</strong></span>` : '<span>Active Streak</span>'}
-        <span>${isCodolio ? 'Streak: ' : ''}<strong>${p.streakDays || 0}d</strong></span>
-      </div>
-    `;
 
     // LIVE SYNC META
     const syncMetaBlock = p.lastSynced ? `
@@ -1103,7 +1143,9 @@ function initAdminConsole() {
         isAdminAuthenticated = true;
         authModal.classList.remove('open');
         passInput.value = '';
-        openAdminDashboard();
+        const targetPane = authModal.dataset.targetPane;
+        delete authModal.dataset.targetPane;
+        openAdminDashboard(targetPane);
         showToast('Admin Console unlocked.', 'success');
       } else {
         showToast('Incorrect passcode. Validation failed.', 'error');
@@ -1134,7 +1176,27 @@ function initAdminConsole() {
   initAdminCodingPlatforms(); // Coding Platforms
 }
 
-export function openAdminDashboard() {
+export function switchAdminPane(paneId) {
+  if (!paneId) return;
+  const tabBtns = document.querySelectorAll('.admin-tab-btn');
+  tabBtns.forEach(btn => {
+    if (btn.dataset.pane === paneId) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  document.querySelectorAll('.admin-pane').forEach(pane => {
+    if (pane.id === paneId) {
+      pane.classList.add('active');
+    } else {
+      pane.classList.remove('active');
+    }
+  });
+}
+
+export function openAdminDashboard(targetPane) {
   const modal = document.getElementById('admin-dashboard-modal');
   if (!modal) return;
   modal.classList.add('open');
@@ -1146,6 +1208,10 @@ export function openAdminDashboard() {
   renderAdminTimeline();
   renderAdminCertificates();
   renderAdminCodingPlatforms();
+
+  if (targetPane) {
+    switchAdminPane(targetPane);
+  }
 }
 
 /* Pane A: Skills CRUD */
@@ -1912,11 +1978,44 @@ function initAdminCodingPlatforms() {
   const cancelBtn = document.getElementById('platform-cancel-btn');
   const adminSyncAllBtn = document.getElementById('admin-sync-all-cp-btn');
   const autoFetchBtn = document.getElementById('admin-fetch-single-cp-btn');
+  const platformSelect = document.getElementById('platform-input-name');
+  const customNameInput = document.getElementById('platform-input-custom-name');
   if (!form) return;
+
+  if (platformSelect && customNameInput) {
+    platformSelect.onchange = () => {
+      if (platformSelect.value === 'Custom') {
+        customNameInput.style.display = 'block';
+        customNameInput.required = true;
+        customNameInput.focus();
+      } else {
+        customNameInput.style.display = 'none';
+        customNameInput.required = false;
+      }
+    };
+  }
 
   function resetPlatformForm() {
     editingPlatformId = null;
     form.reset();
+    if (customNameInput) {
+      customNameInput.style.display = 'none';
+      customNameInput.value = '';
+      customNameInput.required = false;
+    }
+    const checkRating = document.getElementById('platform-check-rating');
+    const checkSolved = document.getElementById('platform-check-solved');
+    const checkBreakdown = document.getElementById('platform-check-breakdown');
+    const checkContests = document.getElementById('platform-check-contests');
+    const checkStreak = document.getElementById('platform-check-streak');
+    const checkRank = document.getElementById('platform-check-rank');
+    if (checkRating) checkRating.checked = true;
+    if (checkSolved) checkSolved.checked = true;
+    if (checkBreakdown) checkBreakdown.checked = true;
+    if (checkContests) checkContests.checked = false;
+    if (checkStreak) checkStreak.checked = true;
+    if (checkRank) checkRank.checked = true;
+
     if (submitBtn) submitBtn.textContent = 'Add Platform Profile';
     if (cancelBtn) cancelBtn.style.display = 'none';
   }
@@ -1960,7 +2059,10 @@ function initAdminCodingPlatforms() {
   // Auto-Fetch live stats for current form handle
   if (autoFetchBtn) {
     autoFetchBtn.onclick = async () => {
-      const platform = document.getElementById('platform-input-name').value;
+      let platform = document.getElementById('platform-input-name').value;
+      if (platform === 'Custom') {
+        platform = document.getElementById('platform-input-custom-name').value.trim() || 'Custom';
+      }
       const handle = document.getElementById('platform-input-handle').value.trim();
       const profileUrl = document.getElementById('platform-input-url').value.trim();
 
@@ -1980,16 +2082,21 @@ function initAdminCodingPlatforms() {
           const d = res.data;
           if (d.handle) document.getElementById('platform-input-handle').value = d.handle;
           if (!profileUrl) {
-            if (platform.toLowerCase().includes('leetcode')) {
+            const pLower = platform.toLowerCase();
+            if (pLower.includes('leetcode')) {
               document.getElementById('platform-input-url').value = `https://leetcode.com/u/${d.handle}/`;
-            } else if (platform.toLowerCase().includes('codeforces')) {
+            } else if (pLower.includes('codeforces')) {
               document.getElementById('platform-input-url').value = `https://codeforces.com/profile/${d.handle}`;
-            } else if (platform.toLowerCase().includes('codechef')) {
+            } else if (pLower.includes('codechef')) {
               document.getElementById('platform-input-url').value = `https://www.codechef.com/users/${d.handle}`;
-            } else if (platform.toLowerCase().includes('codolio')) {
+            } else if (pLower.includes('codolio')) {
               document.getElementById('platform-input-url').value = `https://codolio.com/profile/${d.handle}`;
-            } else if (platform.toLowerCase().includes('geeks') || platform.toLowerCase().includes('gfg')) {
+            } else if (pLower.includes('geeks') || pLower.includes('gfg')) {
               document.getElementById('platform-input-url').value = `https://www.geeksforgeeks.org/profile/${d.handle}`;
+            } else if (pLower.includes('hackerrank')) {
+              document.getElementById('platform-input-url').value = `https://www.hackerrank.com/profile/${d.handle}`;
+            } else if (pLower.includes('atcoder')) {
+              document.getElementById('platform-input-url').value = `https://atcoder.jp/users/${d.handle}`;
             }
           }
           if (d.rating !== undefined) document.getElementById('platform-input-rating').value = d.rating;
@@ -2003,7 +2110,29 @@ function initAdminCodingPlatforms() {
           if (d.contestsCount !== undefined) document.getElementById('platform-input-contests').value = d.contestsCount;
           if (d.streakDays !== undefined) document.getElementById('platform-input-streak').value = d.streakDays;
 
-          showToast(`Fetched live metrics for ${d.handle || platform}!`, 'success');
+          // Intelligently configure the checklist checkboxes based on returned data
+          const hasRating = d.rating !== undefined && d.rating !== null && Number(d.rating) > 0;
+          const hasSolved = d.totalSolved !== undefined && d.totalSolved !== null && Number(d.totalSolved) > 0;
+          const hasBreakdown = (Number(d.easySolved) > 0 || Number(d.mediumSolved) > 0 || Number(d.hardSolved) > 0);
+          const hasContests = d.contestsCount !== undefined && d.contestsCount !== null && Number(d.contestsCount) > 0;
+          const hasStreak = d.streakDays !== undefined && d.streakDays !== null && Number(d.streakDays) > 0;
+          const hasRank = Boolean(d.ranking);
+
+          const checkRating = document.getElementById('platform-check-rating');
+          const checkSolved = document.getElementById('platform-check-solved');
+          const checkBreakdown = document.getElementById('platform-check-breakdown');
+          const checkContests = document.getElementById('platform-check-contests');
+          const checkStreak = document.getElementById('platform-check-streak');
+          const checkRank = document.getElementById('platform-check-rank');
+
+          if (checkRating) checkRating.checked = hasRating;
+          if (checkSolved) checkSolved.checked = hasSolved;
+          if (checkBreakdown) checkBreakdown.checked = hasBreakdown;
+          if (checkContests) checkContests.checked = hasContests;
+          if (checkStreak) checkStreak.checked = hasStreak;
+          if (checkRank) checkRank.checked = hasRank;
+
+          showToast(`Fetched live metrics for ${d.handle || platform}! Parameters checklist configured.`, 'success');
         } else {
           showToast(`Live fetch error: ${res.error}`, 'error');
         }
@@ -2018,13 +2147,16 @@ function initAdminCodingPlatforms() {
 
   form.onsubmit = (e) => {
     e.preventDefault();
-    const platform = document.getElementById('platform-input-name').value;
+    let platform = document.getElementById('platform-input-name').value;
+    if (platform === 'Custom') {
+      platform = document.getElementById('platform-input-custom-name').value.trim() || 'Custom Platform';
+    }
     const handle = document.getElementById('platform-input-handle').value.trim();
     const profileUrl = document.getElementById('platform-input-url').value.trim();
-    const rating = Number(document.getElementById('platform-input-rating').value);
+    const rating = Number(document.getElementById('platform-input-rating').value) || 0;
     const maxRating = Number(document.getElementById('platform-input-max-rating').value) || rating;
     const badge = document.getElementById('platform-input-badge').value.trim();
-    const totalSolved = Number(document.getElementById('platform-input-total-solved').value);
+    const totalSolved = Number(document.getElementById('platform-input-total-solved').value) || 0;
     const easySolved = Number(document.getElementById('platform-input-easy').value) || 0;
     const mediumSolved = Number(document.getElementById('platform-input-medium').value) || 0;
     const hardSolved = Number(document.getElementById('platform-input-hard').value) || 0;
@@ -2032,12 +2164,22 @@ function initAdminCodingPlatforms() {
     const contestsCount = Number(document.getElementById('platform-input-contests').value) || 0;
     const streakDays = Number(document.getElementById('platform-input-streak').value) || 0;
 
+    const showRating = document.getElementById('platform-check-rating')?.checked ?? true;
+    const showSolved = document.getElementById('platform-check-solved')?.checked ?? true;
+    const showBreakdown = document.getElementById('platform-check-breakdown')?.checked ?? true;
+    const showContests = document.getElementById('platform-check-contests')?.checked ?? false;
+    const showStreak = document.getElementById('platform-check-streak')?.checked ?? true;
+    const showRank = document.getElementById('platform-check-rank')?.checked ?? true;
+
     let icon = 'code';
-    if (platform.toLowerCase().includes('leetcode')) icon = 'leetcode';
-    else if (platform.toLowerCase().includes('codeforces')) icon = 'codeforces';
-    else if (platform.toLowerCase().includes('codechef')) icon = 'codechef';
-    else if (platform.toLowerCase().includes('geeks') || platform.toLowerCase().includes('gfg')) icon = 'geeksforgeeks';
-    else if (platform.toLowerCase().includes('codolio')) icon = 'codolio';
+    const pLower = platform.toLowerCase();
+    if (pLower.includes('leetcode')) icon = 'leetcode';
+    else if (pLower.includes('codeforces')) icon = 'codeforces';
+    else if (pLower.includes('codechef')) icon = 'codechef';
+    else if (pLower.includes('geeks') || pLower.includes('gfg')) icon = 'geeksforgeeks';
+    else if (pLower.includes('codolio')) icon = 'codolio';
+    else if (pLower.includes('hackerrank')) icon = 'terminal';
+    else if (pLower.includes('atcoder')) icon = 'cpu';
 
     const platformData = {
       platform,
@@ -2053,7 +2195,13 @@ function initAdminCodingPlatforms() {
       mediumSolved,
       hardSolved,
       contestsCount,
-      streakDays
+      streakDays,
+      showRating,
+      showSolved,
+      showBreakdown,
+      showContests,
+      showStreak,
+      showRank
     };
 
     if (editingPlatformId) {
@@ -2087,11 +2235,18 @@ function renderAdminCodingPlatforms() {
           ${p.isLiveSynced ? `<span class="live-indicator-badge"><span class="live-dot"></span> LIVE</span>` : ''}
         </div>
         <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.2rem;">
-          Rating: <span style="color: var(--accent-mint); font-family: var(--font-mono); font-weight: 700;">${p.rating}</span> [${p.badge}] • Rank: ${p.ranking || 'N/A'}
+          Rating: <span style="color: var(--accent-mint); font-family: var(--font-mono); font-weight: 700;">${p.rating || 0}</span> [${p.badge || 'N/A'}] • Rank: ${p.ranking || 'N/A'}
         </div>
         <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
-          Solved: <strong>${p.totalSolved}</strong> (E: ${p.easySolved}, M: ${p.mediumSolved}, H: ${p.hardSolved}) • Contests: ${p.contestsCount} • Streak: ${p.streakDays}d
+          Solved: <strong>${p.totalSolved || 0}</strong> (E: ${p.easySolved || 0}, M: ${p.mediumSolved || 0}, H: ${p.hardSolved || 0}) • Contests: ${p.contestsCount || 0} • Streak: ${p.streakDays || 0}d
           ${p.lastSynced ? ` • <span style="color: var(--accent-mint);">Synced: ${new Date(p.lastSynced).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>` : ''}
+        </div>
+        <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.35rem;">
+          ${p.showRating ? '<span class="platform-badge-pill" style="font-size: 0.68rem; padding: 1px 7px;">Rating</span>' : ''}
+          ${p.showSolved ? `<span class="platform-badge-pill" style="font-size: 0.68rem; padding: 1px 7px;">Solved${p.showBreakdown ? ' + Bar' : ''}</span>` : ''}
+          ${p.showContests ? '<span class="platform-badge-pill" style="font-size: 0.68rem; padding: 1px 7px;">Contests</span>' : ''}
+          ${p.showStreak ? '<span class="platform-badge-pill" style="font-size: 0.68rem; padding: 1px 7px;">Streak</span>' : ''}
+          ${p.showRank ? '<span class="platform-badge-pill" style="font-size: 0.68rem; padding: 1px 7px;">Rank</span>' : ''}
         </div>
       </div>
       <div style="display: flex; gap: 0.4rem; align-items: center;">
@@ -2145,7 +2300,28 @@ function renderAdminCodingPlatforms() {
 
     item.querySelector('.edit-platform-btn').onclick = () => {
       editingPlatformId = p.id;
-      document.getElementById('platform-input-name').value = p.platform || 'LeetCode';
+      const platformSelect = document.getElementById('platform-input-name');
+      const customNameInput = document.getElementById('platform-input-custom-name');
+
+      const standardOptions = ['LeetCode', 'Codeforces', 'CodeChef', 'GeeksforGeeks', 'Codolio', 'HackerRank', 'AtCoder'];
+      const matched = standardOptions.find(opt => opt.toLowerCase() === (p.platform || '').toLowerCase());
+
+      if (matched) {
+        if (platformSelect) platformSelect.value = matched;
+        if (customNameInput) {
+          customNameInput.style.display = 'none';
+          customNameInput.value = '';
+          customNameInput.required = false;
+        }
+      } else {
+        if (platformSelect) platformSelect.value = 'Custom';
+        if (customNameInput) {
+          customNameInput.style.display = 'block';
+          customNameInput.value = p.platform || '';
+          customNameInput.required = true;
+        }
+      }
+
       document.getElementById('platform-input-handle').value = p.handle || '';
       document.getElementById('platform-input-url').value = p.profileUrl || '';
       document.getElementById('platform-input-rating').value = p.rating || '';
@@ -2158,6 +2334,20 @@ function renderAdminCodingPlatforms() {
       document.getElementById('platform-input-ranking').value = p.ranking || '';
       document.getElementById('platform-input-contests').value = p.contestsCount !== undefined ? p.contestsCount : '';
       document.getElementById('platform-input-streak').value = p.streakDays !== undefined ? p.streakDays : '';
+
+      const checkRating = document.getElementById('platform-check-rating');
+      const checkSolved = document.getElementById('platform-check-solved');
+      const checkBreakdown = document.getElementById('platform-check-breakdown');
+      const checkContests = document.getElementById('platform-check-contests');
+      const checkStreak = document.getElementById('platform-check-streak');
+      const checkRank = document.getElementById('platform-check-rank');
+
+      if (checkRating) checkRating.checked = p.showRating !== undefined ? Boolean(p.showRating) : true;
+      if (checkSolved) checkSolved.checked = p.showSolved !== undefined ? Boolean(p.showSolved) : true;
+      if (checkBreakdown) checkBreakdown.checked = p.showBreakdown !== undefined ? Boolean(p.showBreakdown) : true;
+      if (checkContests) checkContests.checked = p.showContests !== undefined ? Boolean(p.showContests) : false;
+      if (checkStreak) checkStreak.checked = p.showStreak !== undefined ? Boolean(p.showStreak) : true;
+      if (checkRank) checkRank.checked = p.showRank !== undefined ? Boolean(p.showRank) : true;
 
       const submitBtn = document.getElementById('platform-submit-btn');
       const cancelBtn = document.getElementById('platform-cancel-btn');
@@ -2257,10 +2447,13 @@ function initNavigation() {
    URL Routing (?admin, ?print=resume, ?print=cv)
    ========================================================================== */
 
-export function openAdminAuthOrDashboard() {
+export function openAdminAuthOrDashboard(targetPane) {
   const authModal = document.getElementById('admin-auth-modal');
+  if (targetPane && authModal) {
+    authModal.dataset.targetPane = targetPane;
+  }
   if (isAdminAuthenticated) {
-    openAdminDashboard();
+    openAdminDashboard(targetPane);
   } else if (authModal) {
     authModal.classList.add('open');
     const passInput = document.getElementById('admin-passcode-input');

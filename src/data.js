@@ -204,6 +204,12 @@ export const DEFAULT_DATABASE = {
       hardSolved: 18,
       contestsCount: 17,
       streakDays: 100,
+      showRating: true,
+      showSolved: true,
+      showBreakdown: true,
+      showContests: false,
+      showStreak: true,
+      showRank: true,
       isLiveSynced: true
     },
     {
@@ -223,6 +229,12 @@ export const DEFAULT_DATABASE = {
       hardSolved: 0,
       contestsCount: 4,
       streakDays: 30,
+      showRating: true,
+      showSolved: true,
+      showBreakdown: false,
+      showContests: false,
+      showStreak: true,
+      showRank: true,
       isLiveSynced: true
     },
     {
@@ -242,6 +254,12 @@ export const DEFAULT_DATABASE = {
       hardSolved: 10,
       contestsCount: 6,
       streakDays: 60,
+      showRating: true,
+      showSolved: true,
+      showBreakdown: false,
+      showContests: false,
+      showStreak: true,
+      showRank: true,
       isLiveSynced: true
     },
     {
@@ -261,6 +279,12 @@ export const DEFAULT_DATABASE = {
       hardSolved: 6,
       contestsCount: 12,
       streakDays: 45,
+      showRating: false,
+      showSolved: true,
+      showBreakdown: true,
+      showContests: false,
+      showStreak: true,
+      showRank: true,
       isLiveSynced: true
     },
     {
@@ -280,6 +304,12 @@ export const DEFAULT_DATABASE = {
       hardSolved: 34,
       contestsCount: 39,
       streakDays: 120,
+      showRating: false,
+      showSolved: true,
+      showBreakdown: true,
+      showContests: true,
+      showStreak: true,
+      showRank: false,
       isLiveSynced: true
     }
   ],
@@ -353,6 +383,24 @@ export function loadData() {
           parsed.codingPlatforms.push({ ...dp });
         }
       }
+      parsed.codingPlatforms = parsed.codingPlatforms.map(p => {
+        const pLower = (p.platform || '').toLowerCase();
+        const isLeetCode = pLower.includes('leetcode');
+        const isCodeforces = pLower.includes('codeforces');
+        const isCodeChef = pLower.includes('codechef');
+        const isCodolio = pLower.includes('codolio');
+        const isGeeksforGeeks = pLower.includes('geek') || pLower.includes('gfg');
+
+        return {
+          ...p,
+          showRating: p.showRating !== undefined ? Boolean(p.showRating) : (isLeetCode || isCodeforces || isCodeChef),
+          showSolved: p.showSolved !== undefined ? Boolean(p.showSolved) : true,
+          showBreakdown: p.showBreakdown !== undefined ? Boolean(p.showBreakdown) : (isCodolio || isLeetCode || isGeeksforGeeks),
+          showContests: p.showContests !== undefined ? Boolean(p.showContests) : isCodolio,
+          showStreak: p.showStreak !== undefined ? Boolean(p.showStreak) : true,
+          showRank: p.showRank !== undefined ? Boolean(p.showRank) : Boolean(p.ranking)
+        };
+      });
     }
     // Sanitize missing or empty arrays/objects
     parsed.profile = parsed.profile || DEFAULT_DATABASE.profile;
@@ -876,9 +924,24 @@ export async function pullFromCloud() {
         journey: (Array.isArray(data.data.journey) && data.data.journey.length > 0) ? data.data.journey : current.journey,
         skills: (Array.isArray(data.data.skills) && data.data.skills.length > 0) ? data.data.skills : current.skills,
         projects: (Array.isArray(data.data.projects) && data.data.projects.length > 0) ? data.data.projects : current.projects,
-        certificates: (Array.isArray(data.data.certificates) && data.data.certificates.length > 0) ? data.data.certificates : current.certificates,
-        codingPlatforms: (Array.isArray(data.data.codingPlatforms) && data.data.codingPlatforms.length > 0) ? data.data.codingPlatforms : current.codingPlatforms,
-        messages: current.messages || [],
+        codingPlatforms: ((Array.isArray(data.data.codingPlatforms) && data.data.codingPlatforms.length > 0) ? data.data.codingPlatforms : current.codingPlatforms).map(p => {
+          const pLower = (p.platform || '').toLowerCase();
+          const isLeetCode = pLower.includes('leetcode');
+          const isCodeforces = pLower.includes('codeforces');
+          const isCodeChef = pLower.includes('codechef');
+          const isCodolio = pLower.includes('codolio');
+          const isGeeksforGeeks = pLower.includes('geek') || pLower.includes('gfg');
+
+          return {
+            ...p,
+            showRating: p.showRating !== undefined ? Boolean(p.showRating) : (isLeetCode || isCodeforces || isCodeChef),
+            showSolved: p.showSolved !== undefined ? Boolean(p.showSolved) : true,
+            showBreakdown: p.showBreakdown !== undefined ? Boolean(p.showBreakdown) : (isCodolio || isLeetCode || isGeeksforGeeks),
+            showContests: p.showContests !== undefined ? Boolean(p.showContests) : isCodolio,
+            showStreak: p.showStreak !== undefined ? Boolean(p.showStreak) : true,
+            showRank: p.showRank !== undefined ? Boolean(p.showRank) : Boolean(p.ranking)
+          };
+        }),
         settings: {
           ...current.settings,
           lastSyncTimestamp: new Date().toLocaleTimeString()
