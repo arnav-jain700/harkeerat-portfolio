@@ -809,14 +809,17 @@ function renderCodingPlatforms(platforms) {
       </div>
     ` : '';
 
-    // PROBLEMS SOLVED: Only Codolio should display problems solved
+    // PROBLEMS SOLVED
     let solvedBlock = '';
-    if (isCodolio) {
+    const isGeeksforGeeks = pName.includes('geek') || pName.includes('gfg');
+    const hasFullBreakdown = isCodolio || isLeetCode || isGeeksforGeeks;
+
+    if (hasFullBreakdown) {
       solvedBlock = `
         <div class="solved-breakdown-box">
           <div class="solved-header-row">
             <span style="font-size: 0.85rem; color: var(--text-secondary);">Problems Solved</span>
-            <span class="solved-total-count">${p.totalSolved}</span>
+            <span class="solved-total-count">${p.totalSolved || 0}</span>
           </div>
 
           <div class="difficulty-bar-wrap" title="Easy: ${easy} | Medium: ${medium} | Hard: ${hard}">
@@ -841,13 +844,23 @@ function renderCodingPlatforms(platforms) {
           </div>
         </div>
       `;
+    } else if (p.totalSolved !== undefined && p.totalSolved !== null && p.totalSolved !== '') {
+      // Codeforces, CodeChef: just add problems solved info, not the bar category counts
+      solvedBlock = `
+        <div class="solved-breakdown-box" style="margin-bottom: 1.25rem;">
+          <div class="solved-header-row" style="margin-bottom: 0;">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Problems Solved</span>
+            <span class="solved-total-count">${p.totalSolved}</span>
+          </div>
+        </div>
+      `;
     }
 
-    // CONTESTS & STREAK: Only Codolio should display contests
+    // CONTESTS & STREAK: Only Codolio displays contests count
     const footerMetaBlock = `
-      <div class="platform-footer-meta" style="margin-top: ${isCodolio ? '0' : '0.5rem'};">
-        ${isCodolio ? `<span>Contests: <strong>${p.contestsCount || 0}</strong></span>` : ''}
-        <span>Streak: <strong>${p.streakDays || 0}d</strong></span>
+      <div class="platform-footer-meta">
+        ${isCodolio ? `<span>Contests: <strong>${p.contestsCount || 0}</strong></span>` : '<span>Active Streak</span>'}
+        <span>${isCodolio ? 'Streak: ' : ''}<strong>${p.streakDays || 0}d</strong></span>
       </div>
     `;
 
